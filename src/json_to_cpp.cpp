@@ -80,21 +80,34 @@ namespace daw {
 
 			struct obj_info_t {
 				std::string name;
+				bool is_array;
 				std::map<std::string, val_info_t> members;
+
+				obj_info_t( ):
+					name{ },
+					is_array{ false },
+					members{ } { }
 			};	// obj_info_t
 
+			auto unknown_count( ) noexcept {
+				static size_t result = 0;
+				return result++;
+			}
 
-			void obj_to_string( boost::string_view cur_name, daw::json::impl::object_value const & cur_item, std::unordered_map<std::string, obj_info_t> & obj_info ) {
+			auto unknown_name( ) noexcept {
+				return "unknown_" + std::to_string( unknown_count( ) );
+			}
+
+			void parse_json_array( boost::string_view cur_name, daw::json::impl::value_t const & cur_item, std::unordered_map<std::string, obj_info_t> & obj_info );
+
+			void parse_json_object( boost::string_view cur_name, daw::json::impl::object_value const & cur_item, std::unordered_map<std::string, obj_info_t> & obj_info ) {
 				using daw::json::impl::value_t;
 				
 				obj_info_t cur_obj;
 				cur_obj.name = cur_name.to_string( );
 				if( cur_obj.name.empty( ) ) {
-					static size_t unknown_count = 0;
-					cur_obj.name = "unknown_" + std::to_string( unknown_count++ );
+					cur_obj.name = unknown_name( );
 				}
-				std::vector<std::string> sub_objects;
-				std::vector<std::string> sub_arrays;
 				for( auto const & member: cur_item.container( ) ) {
 					val_info_t val_info;
 					val_info.name = member.first.to_string( );
@@ -102,9 +115,9 @@ namespace daw {
 					cur_obj.members[val_info.name] = val_info;
 
 					if( val_info.type == value_t::value_types::object ) {
-						obj_to_string( val_info.name, member.second.get_object( ), obj_info );
+						parse_json_object( val_info.name, member.second.get_object( ), obj_info );
 					} else if( val_info.type == value_t::value_types::array ) {
-						sub_arrays.push_back( val_info.name );
+						parse_json_array( val_info.name, member.second, obj_info );
 					}
 
 				}
@@ -114,10 +127,42 @@ namespace daw {
 					obj_info[cur_obj.name].members[member.first] = member.second;
 				}
 			}
-				
-			std::unordered_map<std::string, obj_info_t> obj_to_string( daw::json::impl::value_t const & json_obj ) {
+			
+			void parse_json_array( boost::string_view cur_name, daw::json::impl::value_t const & cur_item, std::unordered_map<std::string, obj_info_t> & obj_info ) {
+				using daw::json::impl::value_t;
+				obj_info_t cur_obj;
+				cur_obj.is_array = true;
+				cur_obj.name = cur_name.to_string( );
+				if( cur_obj.name.empty( ) ) {
+					cur_obj.name = unknown_name( );
+				}
+				val_info_t val_info;
+				val_info.name = "element_" + cur_obj.name;
+				auto const & arry = cur_item.get_array( );
+				val_info.type = arry.front( ).type( );
+				if( val_info.type == value_t::value_types::array ) {
+					for( auto const & item: arry ) {
+						parse_json_array( val_info.name, item, obj_info );
+					}
+				} else if( val_info.type == value_t::value_types::object ) {
+					for( auto const & item: arry ) {
+						parse_json_object( val_info.name, item.get_object( ), obj_info );
+					}
+				}
+				cur_obj.members[val_info.name] = val_info;
+				obj_info[cur_obj.name] = cur_obj;
+			}
+
+			std::unordered_map<std::string, obj_info_t> parse_json_object( daw::json::impl::value_t const & json_obj ) {
 				std::unordered_map<std::string, obj_info_t> result;
-				obj_to_string( "root_type", json_obj.get_object( ), result );
+				if( json_obj.type( ) == daw::json::impl::value_t::value_types::object ) {
+					parse_json_object( "root_type", json_obj.get_object( ), result );
+				} else if( json_obj.type( ) == daw::json::impl::value_t::value_types::array ) {
+					parse_json_array( "root_type", json_obj, result );
+				} else {
+					std::cerr << "Root object must either be an array or object and not a bare json value(e.g. integer, real, boolean...)";
+					exit( EXIT_FAILURE );
+				}
 				return result;
 			}
 
@@ -170,26 +215,34 @@ namespace daw {
 					auto const & cur_obj = obj_info_item.second;
 					auto const obj_type = cur_obj.name + "_t";
 			
-					ss << "struct " << cur_obj.name;
+					ss << "struct " << obj_type;
 					if( config.enable_jsonlink ) {
 						ss << ": public daw::json::JsonLink<" << obj_type << ">";
 					}
-					ss << " {\n";
+					ss << " {\n\n";
 					for( auto const & item: cur_obj.members ) {
 						auto const & member = item.second;
 						auto const member_type = type_to_string( member.name, member.type );
 						ss << "\t";
 						if( member.is_optional ) {
-							ss << "boost::optional<" << member_type << ">";
-						} else {
-							ss << member_type;
+							ss << "boost::optional<";
 						}
-						ss << " " << member.name << ";\n\n";
+						if( cur_obj.is_array ) {
+							ss << "std::vector<";
+						}
+						ss << member_type;
+						if( cur_obj.is_array ) {
+							ss << ">";
+						} 
+						if( member.is_optional ) {
+							ss << ">";
+						}
+						ss << " " << member.name << ";\n";
 					}
 					if( config.enable_jsonlink ) {
 						// Default Constructor
 						{
-							ss << "\t" << obj_type << "( ):\n";
+							ss << "\n\t" << obj_type << "( ):\n";
 							ss << "\t\t\tdaw::json::JsonLink<" << obj_type << ">{ }";
 							for( auto const & member: cur_obj.members ) {
 								ss << ",\n\t\t\t" << member.first << "{ }";
@@ -223,7 +276,13 @@ namespace daw {
 						ss << "\tvoid set_links( ) {";
 						for( auto const & item: cur_obj.members ) {
 							auto const & member = item.second;
-							ss << "\n\t\tlink_" << type_to_jsonstring( member.type ) << "( \"" << member.name << "\", " << member.name << " );";
+							ss << "\n\t\tlink_";
+							if( cur_obj.is_array ) {
+								ss << "array";
+							} else {
+								ss << type_to_jsonstring( member.type );
+							}
+							ss << "( \"" << member.name << "\", " << member.name << " );";
 						}
 						ss << "\n\t}\n";
 					}
@@ -242,7 +301,7 @@ namespace daw {
 
 		std::string generate_cpp( boost::string_view json_string, config_t const & config ) {
 			auto json_obj = daw::json::parse_json( json_string );
-			auto obj_info = obj_to_string( json_obj );
+			auto obj_info = parse_json_object( json_obj );
 			std::string result = generate_code( obj_info, config );
 
 			return result;
