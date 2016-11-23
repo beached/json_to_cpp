@@ -23,6 +23,8 @@
 #pragma once
 
 #include <boost/utility/string_view.hpp>
+#include <ostream>
+
 #include <daw/json/daw_json_link.h>
 
 namespace daw {
@@ -42,7 +44,7 @@ namespace daw {
 			void set_links( );
 		};	// config_t
 
-		std::string generate_cpp( boost::string_view json_string, config_t const & config );
+		void generate_cpp( boost::string_view json_string, std::ostream & ss, config_t const & config );
 	}	// namespace json_to_cpp
 }    // namespace daw
 

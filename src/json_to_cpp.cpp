@@ -21,11 +21,14 @@
 // SOFTWARE.
 
 
-#include <boost/utility/string_view.hpp>
-#include <unordered_map>
-#include <limits>
-#include <tuple>
 #include <algorithm>
+#include <boost/utility/string_view.hpp>
+#include <limits>
+#include <ostream>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+
 #include <daw/json/daw_json_link.h>
 
 #include "json_to_cpp.h"
@@ -114,7 +117,23 @@ namespace daw {
 			void parse_json_array( boost::string_view cur_name, daw::json::impl::value_t const & cur_item, std::vector<obj_info_t> & obj_info, state_t & obj_state );
 
 			auto find_by_name( std::vector<obj_info_t> & obj_info, std::string const & name ) {
-				return std::find_if( obj_info.begin( ), obj_info.end( ), [&]( auto const & v ) { return v.name == name; } );
+				return std::find_if( obj_info.begin( ), obj_info.end( ), 
+				
+				[&name]( auto const & v ) { 
+					return v.name == name; 
+				} );
+			}
+
+			void add_or_merge( std::vector<obj_info_t> & obj_info, obj_info_t cur_obj ) {
+				assert( !cur_obj.name.empty( ) );
+				auto old_item = find_by_name( obj_info, cur_obj.name );
+				if( old_item == obj_info.end( ) ) {
+					old_item = obj_info.insert( obj_info.end( ), cur_obj );
+				} else {
+					for( auto const & member: cur_obj.members ) {
+						old_item->members[member.first] = member.second;
+					}
+				}
 			}
 
 			void parse_json_object( boost::string_view cur_name, daw::json::impl::object_value const & cur_item, std::vector<obj_info_t> & obj_info, state_t & obj_state ) {
@@ -132,32 +151,26 @@ namespace daw {
 					cur_obj.members[val_info.name] = val_info;
 
 					switch( val_info.type ) {
-					case value_t::value_types::array: 
-						obj_state.has_arrays = true;
-						parse_json_array( val_info.name, member.second, obj_info, obj_state );
-					break;
-					case value_t::value_types::object: 
-						parse_json_object( val_info.name, member.second.get_object( ), obj_info, obj_state );
-					break;
-					case value_t::value_types::integral:
-						obj_state.has_integrals = true;
-					break;
-					case value_t::value_types::string:
-						obj_state.has_strings = true;
-					break;
-					default:
-					break;
-				}
-				}
-
-				auto old_item = find_by_name( obj_info, cur_obj.name );
-				if( old_item != obj_info.end( ) ) {
-					for( auto const & member: cur_obj.members ) {
-						old_item->members[member.first] = member.second;
+						case value_t::value_types::array: 
+							obj_state.has_arrays = true;
+							parse_json_array( val_info.name, member.second, obj_info, obj_state );
+						break;
+						case value_t::value_types::object: 
+							parse_json_object( val_info.name, member.second.get_object( ), obj_info, obj_state );
+						break;
+						case value_t::value_types::integral:
+							obj_state.has_integrals = true;
+						break;
+						case value_t::value_types::string:
+							obj_state.has_strings = true;
+						break;
+						case value_t::value_types::real:
+						case value_t::value_types::boolean:
+						case value_t::value_types::null:
+						break;
 					}
-				} else {
-					obj_info.push_back( cur_obj );
 				}
+				add_or_merge( obj_info, std::move( cur_obj ) );
 			}
 
 			void parse_json_array( boost::string_view cur_name, daw::json::impl::value_t const & cur_item, std::vector<obj_info_t> & obj_info, state_t & obj_state ) {
@@ -191,20 +204,14 @@ namespace daw {
 					case value_t::value_types::string:
 						obj_state.has_strings = true;
 					break;
-					default:
+					case value_t::value_types::real:
+					case value_t::value_types::boolean:
+					case value_t::value_types::null:
 					break;
 				}
 
 				cur_obj.members[val_info.name] = val_info;
-
-				auto old_item = find_by_name( obj_info, cur_obj.name );
-				if( old_item != obj_info.end( ) ) {
-					for( auto const & member: cur_obj.members ) {
-						old_item->members[member.first] = member.second;
-					}
-				} else {
-					obj_info.push_back( cur_obj );
-				}
+				add_or_merge( obj_info, std::move( cur_obj ) );
 			}
 
 			std::vector<obj_info_t> parse_json_object( daw::json::impl::value_t const & json_obj, state_t & obj_state ) {
@@ -263,7 +270,7 @@ namespace daw {
 				std::abort( );
 			}
 
-			void generate_default_constructor( bool definition, std::stringstream & ss, std::string const & obj_type, obj_info_t cur_obj ) {
+			void generate_default_constructor( bool definition, std::ostream & ss, std::string const & obj_type, obj_info_t cur_obj ) {
 				if( definition ) {
 					ss << obj_type << "::" << obj_type << "( ):\n";
 					ss << "\t\tdaw::json::JsonLink<" << obj_type << ">{ }";
@@ -276,7 +283,7 @@ namespace daw {
 				}
 			}
 
-			void generate_copy_constructor( bool definition, std::stringstream & ss, std::string const & obj_type, obj_info_t cur_obj ) {
+			void generate_copy_constructor( bool definition, std::ostream & ss, std::string const & obj_type, obj_info_t cur_obj ) {
 				if( definition ) {
 					ss << obj_type << "::";
 					ss << obj_type << "( " << obj_type << " const & other )";
@@ -290,7 +297,7 @@ namespace daw {
 				}
 			}
 
-			void generate_move_constructor( bool definition, std::stringstream & ss, std::string const & obj_type, obj_info_t cur_obj ) {
+			void generate_move_constructor( bool definition, std::ostream & ss, std::string const & obj_type, obj_info_t cur_obj ) {
 				if( definition ) {
 					ss << obj_type << "::" << obj_type << "( " << obj_type << " && other ):\n";
 					ss << "\t\tdaw::json::JsonLink<" << obj_type << ">{ }";
@@ -303,7 +310,7 @@ namespace daw {
 				}
 			}
 
-			void generate_destructor( bool definition, std::stringstream & ss, std::string const & obj_type ) {
+			void generate_destructor( bool definition, std::ostream & ss, std::string const & obj_type ) {
 				if( definition ) {
 					ss << obj_type << "::~" << obj_type << "( ) { }\n\n";
 				} else {
@@ -311,7 +318,7 @@ namespace daw {
 				}
 			}
 
-			void generate_set_links( bool definition, std::stringstream & ss, std::string const & obj_type, obj_info_t cur_obj ) {
+			void generate_set_links( bool definition, std::ostream & ss, std::string const & obj_type, obj_info_t cur_obj ) {
 				if( definition ) {
 					ss << "void " << obj_type << "::set_links( ) {\n";
 					for( auto const & item: cur_obj.members ) {
@@ -330,7 +337,7 @@ namespace daw {
 				}
 			}
 
-			void generate_jsonlink( bool definition, std::stringstream & ss, std::string const & obj_type, obj_info_t cur_obj ) {
+			void generate_jsonlink( bool definition, std::ostream & ss, std::string const & obj_type, obj_info_t cur_obj ) {
 				generate_default_constructor( definition, ss, obj_type, cur_obj );
 				generate_copy_constructor( definition, ss, obj_type, cur_obj );
 				generate_move_constructor( definition, ss, obj_type, cur_obj );
@@ -342,7 +349,7 @@ namespace daw {
 				}
 			}
 
-			void generate_includes( std::stringstream & ss, config_t const & config, state_t const & obj_state ) {
+			void generate_includes( std::ostream & ss, config_t const & config, state_t const & obj_state ) {
 				if( obj_state.has_optionals ) ss << "#include <boost/optional.hpp>\n";
 				if( obj_state.has_integrals ) ss << "#include <cstdint>\n";
 				if( obj_state.has_strings ) ss << "#include <string>\n";
@@ -351,11 +358,7 @@ namespace daw {
 				ss << '\n';
 			}
 
-			std::string generate_code( std::vector<obj_info_t> obj_info, config_t const & config, state_t const & obj_state ) {
-				using daw::json::impl::value_t;
-				std::stringstream ss;
-				ss << "// Code auto generated from json file.\n";
-				generate_includes( ss, config, obj_state );
+			void generate_declarations( std::vector<obj_info_t> const & obj_info, std::ostream & ss, config_t const & config, state_t const & obj_state ) {
 				for( auto const & cur_obj: obj_info ) {
 					auto const obj_type = cur_obj.name + "_t";
 
@@ -391,32 +394,33 @@ namespace daw {
 					if( config.enable_comments ) {
 						ss << "\t// " << obj_type;
 					}
-					ss << "\n";
+					ss << "\n\n";
 				}
+			}
+
+			void generate_definitions( std::vector<obj_info_t> const & obj_info, std::ostream & ss, config_t const & config, state_t const & obj_state ) {
 				for( auto const & cur_obj: obj_info ) {
 					auto const obj_type = cur_obj.name + "_t";
-					for( auto const & item: cur_obj.members ) {
-						auto const & member = item.second;
-						auto const member_type = type_to_string( member.name, member.type );
-						if( config.enable_jsonlink ) {
-							generate_jsonlink( true, ss, obj_type, cur_obj );
-						}
-						ss << '\n';
-					}
+					generate_jsonlink( true, ss, obj_type, cur_obj );
 				}
-				return ss.str( );
+			}
+
+			void generate_code( std::vector<obj_info_t> const & obj_info, std::ostream & ss, config_t const & config, state_t const & obj_state ) {
+				ss << "// Code auto generated from json file.\n";
+				generate_includes( ss, config, obj_state );
+				generate_declarations( obj_info, ss, config, obj_state );
+				if( config.enable_jsonlink ) {
+					generate_definitions( obj_info, ss, config, obj_state );
+				}
 			}
 
 		}	// namespace anonymous
 
-		std::string generate_cpp( boost::string_view json_string, config_t const & config ) {
+		void generate_cpp( boost::string_view json_string, std::ostream & ss, config_t const & config ) {
 			state_t obj_state;
 			auto json_obj = daw::json::parse_json( json_string );
 			auto obj_info = parse_json_object( json_obj, obj_state );
-			std::string result = generate_code( obj_info, config, obj_state );
-
-			return result;
-
+			generate_code( obj_info, ss, config, obj_state );
 		}
 	}	// namespace json_to_cpp
 }    // namespace daw
