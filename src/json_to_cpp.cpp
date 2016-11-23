@@ -32,37 +32,37 @@ namespace daw {
 	namespace json_to_cpp {
 		bool enable_comments;
 		bool enable_jsonlink;
-		
+
 		void config_t::set_links( ) {
 			link_boolean( "enable_comments", enable_comments );
 			link_boolean( "enable_jsonlink", enable_jsonlink );
 		}
 
 		config_t::config_t( ):
-				daw::json::JsonLink<config_t>{ },
-				enable_comments{ true },
-				enable_jsonlink{ true } {
-			
-			set_links( );	
-		}
+			daw::json::JsonLink<config_t>{ },
+			enable_comments{ true },
+			enable_jsonlink{ true } {
+
+				set_links( );	
+			}
 
 		config_t::~config_t( ) { }
 
 		config_t::config_t( config_t const & other ):
-				daw::json::JsonLink<config_t>{ },
-				enable_comments{ other.enable_comments },
-				enable_jsonlink{ other.enable_jsonlink } {
-			
-			set_links( );	
-		}
+			daw::json::JsonLink<config_t>{ },
+			enable_comments{ other.enable_comments },
+			enable_jsonlink{ other.enable_jsonlink } {
+
+				set_links( );	
+			}
 
 		config_t::config_t( config_t && other ):
-				daw::json::JsonLink<config_t>{ },
-				enable_comments{ std::move( other.enable_comments ) },
-				enable_jsonlink{ std::move( other.enable_jsonlink ) } {
-			
-			set_links( );	
-		}
+			daw::json::JsonLink<config_t>{ },
+			enable_comments{ std::move( other.enable_comments ) },
+			enable_jsonlink{ std::move( other.enable_jsonlink ) } {
+
+				set_links( );	
+			}
 
 		namespace {
 			struct val_info_t {
@@ -102,7 +102,7 @@ namespace daw {
 
 			void parse_json_object( boost::string_view cur_name, daw::json::impl::object_value const & cur_item, std::unordered_map<std::string, obj_info_t> & obj_info ) {
 				using daw::json::impl::value_t;
-				
+
 				obj_info_t cur_obj;
 				cur_obj.name = cur_name.to_string( );
 				if( cur_obj.name.empty( ) ) {
@@ -127,7 +127,7 @@ namespace daw {
 					obj_info[cur_obj.name].members[member.first] = member.second;
 				}
 			}
-			
+
 			void parse_json_array( boost::string_view cur_name, daw::json::impl::value_t const & cur_item, std::unordered_map<std::string, obj_info_t> & obj_info ) {
 				using daw::json::impl::value_t;
 				obj_info_t cur_obj;
@@ -208,18 +208,97 @@ namespace daw {
 				std::abort( );
 			}
 
+			void generate_default_constructor( bool definition, std::stringstream & ss, std::string const & obj_type, obj_info_t cur_obj ) {
+				if( definition ) {
+					ss << obj_type << "::" << obj_type << "( ):\n";
+					ss << "\t\tdaw::json::JsonLink<" << obj_type << ">{ }";
+					for( auto const & member: cur_obj.members ) {
+						ss << ",\n\t\t" << member.first << "{ }";
+					}
+					ss << " {\n\n\tset_links( );\n}\n\n";
+				} else {
+					ss << "\t" << obj_type << "( );\n";
+				}
+			}
+
+			void generate_copy_constructor( bool definition, std::stringstream & ss, std::string const & obj_type, obj_info_t cur_obj ) {
+				if( definition ) {
+					ss << obj_type << "::";
+					ss << obj_type << "( " << obj_type << " const & other )";
+					ss << ":\n\t\tdaw::json::JsonLink<" << obj_type << ">{ }";
+					for( auto const & member: cur_obj.members ) {
+						ss << ",\n\t\t" << member.first << "{ other." << member.first << " }";
+					}
+					ss << " {\n\n\tset_links( );\n}\n\n";
+				} else {
+					ss << "\t" << obj_type << "( " << obj_type << " const & other );\n";
+				}
+			}
+
+			void generate_move_constructor( bool definition, std::stringstream & ss, std::string const & obj_type, obj_info_t cur_obj ) {
+				if( definition ) {
+					ss << obj_type << "::" << obj_type << "( " << obj_type << " && other ):\n";
+					ss << "\t\tdaw::json::JsonLink<" << obj_type << ">{ }";
+					for( auto const & member: cur_obj.members ) {
+						ss << ",\n\t\t" << member.first << "{ std::move( other." << member.first << " ) }";
+					}
+					ss << " {\n\n\tset_links( );\n}\n\n";
+				} else {
+					ss << "\t" << obj_type << "( " << obj_type << " && other );\n";
+				}
+			}
+
+			void generate_destructor( bool definition, std::stringstream & ss, std::string const & obj_type ) {
+				if( definition ) {
+					ss << obj_type << "::~" << obj_type << "( ) { }\n\n";
+				} else {
+					ss << "\t~" << obj_type << "( );\n";
+				}
+			}
+
+			void generate_set_links( bool definition, std::stringstream & ss, std::string const & obj_type, obj_info_t cur_obj ) {
+				if( definition ) {
+					ss << "void " << obj_type << "::set_links( ) {\n";
+					for( auto const & item: cur_obj.members ) {
+						auto const & member = item.second;
+						ss << "\tlink_";
+						if( cur_obj.is_array ) {
+							ss << "array";
+						} else {
+							ss << type_to_jsonstring( member.type );
+						}
+						ss << "( \"" << member.name << "\", " << member.name << " );\n";
+					}
+					ss << "}\n\n";
+				} else {
+					ss << "\tvoid set_links( );\n";
+				}
+			}
+
+			void generate_jsonlink( bool definition, std::stringstream & ss, std::string const & obj_type, obj_info_t cur_obj ) {
+				generate_default_constructor( definition, ss, obj_type, cur_obj );
+				generate_copy_constructor( definition, ss, obj_type, cur_obj );
+				generate_move_constructor( definition, ss, obj_type, cur_obj );
+				generate_destructor( definition, ss, obj_type );
+				generate_set_links( definition, ss, obj_type, cur_obj );
+				if( !definition ) {
+					ss << "\n\t" << obj_type << " & operator=( " << obj_type << " const & ) = default;\n";
+					ss << "\t" << obj_type << " & operator=( " << obj_type << " && ) = default;\n";
+				}
+			}
+
 			std::string generate_code( std::unordered_map<std::string, obj_info_t> obj_info, config_t const & config ) {
 				using daw::json::impl::value_t;
 				std::stringstream ss;
 				for( auto const & obj_info_item: obj_info ) {
 					auto const & cur_obj = obj_info_item.second;
 					auto const obj_type = cur_obj.name + "_t";
-			
+
 					ss << "struct " << obj_type;
 					if( config.enable_jsonlink ) {
 						ss << ": public daw::json::JsonLink<" << obj_type << ">";
 					}
-					ss << " {\n\n";
+					ss << " {\n";
 					for( auto const & item: cur_obj.members ) {
 						auto const & member = item.second;
 						auto const member_type = type_to_string( member.name, member.type );
@@ -239,60 +318,18 @@ namespace daw {
 						}
 						ss << " " << member.name << ";\n";
 					}
+					ss << "\n";
 					if( config.enable_jsonlink ) {
-						// Default Constructor
-						{
-							ss << "\n\t" << obj_type << "( ):\n";
-							ss << "\t\t\tdaw::json::JsonLink<" << obj_type << ">{ }";
-							for( auto const & member: cur_obj.members ) {
-								ss << ",\n\t\t\t" << member.first << "{ }";
-							}
-							ss << " {\n\t\tset_links( );\n\t}\n";
-						}
-						// Copy Constructor
-						{
-							ss << "\t" << obj_type << "( " << obj_type << " const & other ):\n";
-							ss << "\t\t\tdaw::json::JsonLink<" << obj_type << ">{ }";
-							for( auto const & member: cur_obj.members ) {
-								ss << ",\n\t\t\t" << member.first << "{ other." << member.first << " }";
-							}
-							ss << " {\n\t\tset_links( );\n\t}\n";
-						}
-						// Move Constructor
-						{
-							ss << "\t" << obj_type << "( " << obj_type << " && other ):\n";
-							ss << "\t\t\tdaw::json::JsonLink<" << obj_type << ">{ }";
-							for( auto const & member: cur_obj.members ) {
-								ss << ",\n\t\t\t" << member.first << "{ std::move( other." << member.first << " ) }";
-							}
-							ss << " {\n\t\tset_links( );\n\t}\n";
-						}
-						// Destructor
-						ss << "\t~" << obj_type << "( ) { }\n";
-						// copy/move operators
-						ss << "\t" << obj_type << " & operator=( " << obj_type << " const & ) = default\n";
-						ss << "\t" << obj_type << " & operator=( " << obj_type << " && ) = default\n";
-						//	set_links
-						ss << "\tvoid set_links( ) {";
-						for( auto const & item: cur_obj.members ) {
-							auto const & member = item.second;
-							ss << "\n\t\tlink_";
-							if( cur_obj.is_array ) {
-								ss << "array";
-							} else {
-								ss << type_to_jsonstring( member.type );
-							}
-							ss << "( \"" << member.name << "\", " << member.name << " );";
-						}
-						ss << "\n\t}\n";
+						generate_jsonlink( false, ss, obj_type, cur_obj );
 					}
-
 					ss << "};";
 					if( config.enable_comments ) {
 						ss << "\t// " << obj_type;
 					}
 					ss << "\n\n";
-
+					if( config.enable_jsonlink ) {
+						generate_jsonlink( true, ss, obj_type, cur_obj );
+					}
 				}
 				return ss.str( );
 			}
@@ -305,7 +342,7 @@ namespace daw {
 			std::string result = generate_code( obj_info, config );
 
 			return result;
-				
+
 		}
 	}	// namespace json_to_cpp
 }    // namespace daw
