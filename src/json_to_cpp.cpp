@@ -23,7 +23,9 @@
 
 #include <boost/utility/string_view.hpp>
 #include <unordered_map>
-
+#include <limits>
+#include <tuple>
+#include <algorithm>
 #include <daw/json/daw_json_link.h>
 
 #include "json_to_cpp.h"
@@ -98,9 +100,13 @@ namespace daw {
 				return "unknown_" + std::to_string( unknown_count( ) );
 			}
 
-			void parse_json_array( boost::string_view cur_name, daw::json::impl::value_t const & cur_item, std::unordered_map<std::string, obj_info_t> & obj_info );
+			void parse_json_array( boost::string_view cur_name, daw::json::impl::value_t const & cur_item, std::vector<obj_info_t> & obj_info );
 
-			void parse_json_object( boost::string_view cur_name, daw::json::impl::object_value const & cur_item, std::unordered_map<std::string, obj_info_t> & obj_info ) {
+			auto find_by_name( std::vector<obj_info_t> & obj_info, std::string const & name ) {
+				return std::find_if( obj_info.begin( ), obj_info.end( ), [&]( auto const & v ) { return v.name == name; } );
+			}
+
+			void parse_json_object( boost::string_view cur_name, daw::json::impl::object_value const & cur_item, std::vector<obj_info_t> & obj_info ) {
 				using daw::json::impl::value_t;
 
 				obj_info_t cur_obj;
@@ -121,14 +127,18 @@ namespace daw {
 					}
 
 				}
-				// This will merge or create
-				obj_info[cur_obj.name].name = cur_obj.name;
-				for( auto const & member: cur_obj.members ) {
-					obj_info[cur_obj.name].members[member.first] = member.second;
+
+				auto old_item = find_by_name( obj_info, cur_obj.name );
+				if( old_item != obj_info.end( ) ) {
+					for( auto const & member: cur_obj.members ) {
+						old_item->members[member.first] = member.second;
+					}
+				} else {
+					obj_info.push_back( cur_obj );
 				}
 			}
 
-			void parse_json_array( boost::string_view cur_name, daw::json::impl::value_t const & cur_item, std::unordered_map<std::string, obj_info_t> & obj_info ) {
+			void parse_json_array( boost::string_view cur_name, daw::json::impl::value_t const & cur_item, std::vector<obj_info_t> & obj_info ) {
 				using daw::json::impl::value_t;
 				obj_info_t cur_obj;
 				cur_obj.is_array = true;
@@ -150,11 +160,19 @@ namespace daw {
 					}
 				}
 				cur_obj.members[val_info.name] = val_info;
-				obj_info[cur_obj.name] = cur_obj;
+
+				auto old_item = find_by_name( obj_info, cur_obj.name );
+				if( old_item != obj_info.end( ) ) {
+					for( auto const & member: cur_obj.members ) {
+						old_item->members[member.first] = member.second;
+					}
+				} else {
+					obj_info.push_back( cur_obj );
+				}
 			}
 
-			std::unordered_map<std::string, obj_info_t> parse_json_object( daw::json::impl::value_t const & json_obj ) {
-				std::unordered_map<std::string, obj_info_t> result;
+			std::vector<obj_info_t> parse_json_object( daw::json::impl::value_t const & json_obj ) {
+				std::vector<obj_info_t> result;
 				if( json_obj.type( ) == daw::json::impl::value_t::value_types::object ) {
 					parse_json_object( "root_type", json_obj.get_object( ), result );
 				} else if( json_obj.type( ) == daw::json::impl::value_t::value_types::array ) {
@@ -287,11 +305,10 @@ namespace daw {
 				}
 			}
 
-			std::string generate_code( std::unordered_map<std::string, obj_info_t> obj_info, config_t const & config ) {
+			std::string generate_code( std::vector<obj_info_t> obj_info, config_t const & config ) {
 				using daw::json::impl::value_t;
 				std::stringstream ss;
-				for( auto const & obj_info_item: obj_info ) {
-					auto const & cur_obj = obj_info_item.second;
+				for( auto const & cur_obj: obj_info ) {
 					auto const obj_type = cur_obj.name + "_t";
 
 					ss << "struct " << obj_type;

@@ -38,7 +38,8 @@ int main( int argc, char ** argv ) {
 	std::string json_blob;
 	std::copy( std::istream_iterator<char>{ in_file }, std::istream_iterator<char>{ }, std::back_inserter( json_blob ) );
 	in_file.close( );
-	auto code = generate_cpp( json_blob, config_t{ } );
+	config_t config{ };
+	auto code = generate_cpp( json_blob, config );
 	std::cout << code << '\n';
 
 	return EXIT_SUCCESS;
