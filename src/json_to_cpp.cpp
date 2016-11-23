@@ -333,6 +333,7 @@ namespace daw {
 					}
 					ss << "}\n\n";
 				} else {
+					ss << "private:\n";
 					ss << "\tvoid set_links( );\n";
 				}
 			}
@@ -342,11 +343,11 @@ namespace daw {
 				generate_copy_constructor( definition, ss, obj_type, cur_obj );
 				generate_move_constructor( definition, ss, obj_type, cur_obj );
 				generate_destructor( definition, ss, obj_type );
-				generate_set_links( definition, ss, obj_type, cur_obj );
 				if( !definition ) {
 					ss << "\n\t" << obj_type << " & operator=( " << obj_type << " const & ) = default;\n";
 					ss << "\t" << obj_type << " & operator=( " << obj_type << " && ) = default;\n";
 				}
+				generate_set_links( definition, ss, obj_type, cur_obj );
 			}
 
 			void generate_includes( std::ostream & ss, config_t const & config, state_t const & obj_state ) {
