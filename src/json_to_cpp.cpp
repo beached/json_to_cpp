@@ -34,6 +34,17 @@ namespace daw {
 	namespace json_to_cpp {
 		bool enable_comments;
 		bool enable_jsonlink;
+		struct state_t {
+			bool has_arrays;
+			bool has_integrals;
+			bool has_optionals;
+			bool has_strings;
+			state_t( ):
+				has_arrays{ false },
+				has_integrals{ false },
+				has_optionals{ false },
+				has_strings{ false } { }
+		};
 
 		void config_t::set_links( ) {
 			link_boolean( "enable_comments", enable_comments );
@@ -100,13 +111,13 @@ namespace daw {
 				return "unknown_" + std::to_string( unknown_count( ) );
 			}
 
-			void parse_json_array( boost::string_view cur_name, daw::json::impl::value_t const & cur_item, std::vector<obj_info_t> & obj_info );
+			void parse_json_array( boost::string_view cur_name, daw::json::impl::value_t const & cur_item, std::vector<obj_info_t> & obj_info, state_t & obj_state );
 
 			auto find_by_name( std::vector<obj_info_t> & obj_info, std::string const & name ) {
 				return std::find_if( obj_info.begin( ), obj_info.end( ), [&]( auto const & v ) { return v.name == name; } );
 			}
 
-			void parse_json_object( boost::string_view cur_name, daw::json::impl::object_value const & cur_item, std::vector<obj_info_t> & obj_info ) {
+			void parse_json_object( boost::string_view cur_name, daw::json::impl::object_value const & cur_item, std::vector<obj_info_t> & obj_info, state_t & obj_state ) {
 				using daw::json::impl::value_t;
 
 				obj_info_t cur_obj;
@@ -120,12 +131,23 @@ namespace daw {
 					val_info.type = member.second.type( );
 					cur_obj.members[val_info.name] = val_info;
 
-					if( val_info.type == value_t::value_types::object ) {
-						parse_json_object( val_info.name, member.second.get_object( ), obj_info );
-					} else if( val_info.type == value_t::value_types::array ) {
-						parse_json_array( val_info.name, member.second, obj_info );
-					}
-
+					switch( val_info.type ) {
+					case value_t::value_types::array: 
+						obj_state.has_arrays = true;
+						parse_json_array( val_info.name, member.second, obj_info, obj_state );
+					break;
+					case value_t::value_types::object: 
+						parse_json_object( val_info.name, member.second.get_object( ), obj_info, obj_state );
+					break;
+					case value_t::value_types::integral:
+						obj_state.has_integrals = true;
+					break;
+					case value_t::value_types::string:
+						obj_state.has_strings = true;
+					break;
+					default:
+					break;
+				}
 				}
 
 				auto old_item = find_by_name( obj_info, cur_obj.name );
@@ -138,7 +160,7 @@ namespace daw {
 				}
 			}
 
-			void parse_json_array( boost::string_view cur_name, daw::json::impl::value_t const & cur_item, std::vector<obj_info_t> & obj_info ) {
+			void parse_json_array( boost::string_view cur_name, daw::json::impl::value_t const & cur_item, std::vector<obj_info_t> & obj_info, state_t & obj_state ) {
 				using daw::json::impl::value_t;
 				obj_info_t cur_obj;
 				cur_obj.is_array = true;
@@ -150,15 +172,29 @@ namespace daw {
 				val_info.name = "element_" + cur_obj.name;
 				auto const & arry = cur_item.get_array( );
 				val_info.type = arry.front( ).type( );
-				if( val_info.type == value_t::value_types::array ) {
-					for( auto const & item: arry ) {
-						parse_json_array( val_info.name, item, obj_info );
+				switch( val_info.type ) {
+					case value_t::value_types::array: {
+						obj_state.has_arrays = true;
+						for( auto const & item: arry ) {
+							parse_json_array( val_info.name, item, obj_info, obj_state );
+						}
 					}
-				} else if( val_info.type == value_t::value_types::object ) {
-					for( auto const & item: arry ) {
-						parse_json_object( val_info.name, item.get_object( ), obj_info );
-					}
+					break;
+					case value_t::value_types::object: 
+						for( auto const & item: arry ) {
+							parse_json_object( val_info.name, item.get_object( ), obj_info, obj_state );
+						}
+					break;	
+					case value_t::value_types::integral:
+						obj_state.has_integrals = true;
+					break;
+					case value_t::value_types::string:
+						obj_state.has_strings = true;
+					break;
+					default:
+					break;
 				}
+
 				cur_obj.members[val_info.name] = val_info;
 
 				auto old_item = find_by_name( obj_info, cur_obj.name );
@@ -171,12 +207,13 @@ namespace daw {
 				}
 			}
 
-			std::vector<obj_info_t> parse_json_object( daw::json::impl::value_t const & json_obj ) {
+			std::vector<obj_info_t> parse_json_object( daw::json::impl::value_t const & json_obj, state_t & obj_state ) {
 				std::vector<obj_info_t> result;
+
 				if( json_obj.type( ) == daw::json::impl::value_t::value_types::object ) {
-					parse_json_object( "root_type", json_obj.get_object( ), result );
+					parse_json_object( "root_type", json_obj.get_object( ), result, obj_state );
 				} else if( json_obj.type( ) == daw::json::impl::value_t::value_types::array ) {
-					parse_json_array( "root_type", json_obj, result );
+					parse_json_array( "root_type", json_obj, result, obj_state );
 				} else {
 					std::cerr << "Root object must either be an array or object and not a bare json value(e.g. integer, real, boolean...)";
 					exit( EXIT_FAILURE );
@@ -305,9 +342,20 @@ namespace daw {
 				}
 			}
 
-			std::string generate_code( std::vector<obj_info_t> obj_info, config_t const & config ) {
+			void generate_includes( std::stringstream & ss, config_t const & config, state_t const & obj_state ) {
+				if( obj_state.has_optionals ) ss << "#include <boost/optional.hpp>\n";
+				if( obj_state.has_integrals ) ss << "#include <cstdint>\n";
+				if( obj_state.has_strings ) ss << "#include <string>\n";
+				if( obj_state.has_arrays ) ss << "#include <vector>\n";
+				if( config.enable_jsonlink ) ss << "#include <daw/json/daw_json_link.h>\n";
+				ss << '\n';
+			}
+
+			std::string generate_code( std::vector<obj_info_t> obj_info, config_t const & config, state_t const & obj_state ) {
 				using daw::json::impl::value_t;
 				std::stringstream ss;
+				ss << "// Code auto generated from json file.\n";
+				generate_includes( ss, config, obj_state );
 				for( auto const & cur_obj: obj_info ) {
 					auto const obj_type = cur_obj.name + "_t";
 
@@ -343,9 +391,17 @@ namespace daw {
 					if( config.enable_comments ) {
 						ss << "\t// " << obj_type;
 					}
-					ss << "\n\n";
-					if( config.enable_jsonlink ) {
-						generate_jsonlink( true, ss, obj_type, cur_obj );
+					ss << "\n";
+				}
+				for( auto const & cur_obj: obj_info ) {
+					auto const obj_type = cur_obj.name + "_t";
+					for( auto const & item: cur_obj.members ) {
+						auto const & member = item.second;
+						auto const member_type = type_to_string( member.name, member.type );
+						if( config.enable_jsonlink ) {
+							generate_jsonlink( true, ss, obj_type, cur_obj );
+						}
+						ss << '\n';
 					}
 				}
 				return ss.str( );
@@ -354,9 +410,10 @@ namespace daw {
 		}	// namespace anonymous
 
 		std::string generate_cpp( boost::string_view json_string, config_t const & config ) {
+			state_t obj_state;
 			auto json_obj = daw::json::parse_json( json_string );
-			auto obj_info = parse_json_object( json_obj );
-			std::string result = generate_code( obj_info, config );
+			auto obj_info = parse_json_object( json_obj, obj_state );
+			std::string result = generate_code( obj_info, config, obj_state );
 
 			return result;
 
