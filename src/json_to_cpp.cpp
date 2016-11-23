@@ -86,10 +86,13 @@ namespace daw {
 
 			void obj_to_string( boost::string_view cur_name, daw::json::impl::object_value const & cur_item, std::unordered_map<std::string, obj_info_t> & obj_info ) {
 				using daw::json::impl::value_t;
-
+				
 				obj_info_t cur_obj;
 				cur_obj.name = cur_name.to_string( );
-
+				if( cur_obj.name.empty( ) ) {
+					static size_t unknown_count = 0;
+					cur_obj.name = "unknown_" + std::to_string( unknown_count++ );
+				}
 				std::vector<std::string> sub_objects;
 				std::vector<std::string> sub_arrays;
 				for( auto const & member: cur_item.container( ) ) {
@@ -99,12 +102,17 @@ namespace daw {
 					cur_obj.members[val_info.name] = val_info;
 
 					if( val_info.type == value_t::value_types::object ) {
-						sub_objects.push_back( val_info.name );
+						obj_to_string( val_info.name, member.second.get_object( ), obj_info );
 					} else if( val_info.type == value_t::value_types::array ) {
 						sub_arrays.push_back( val_info.name );
 					}
+
 				}
-				obj_info[cur_obj.name] = cur_obj;
+				// This will merge or create
+				obj_info[cur_obj.name].name = cur_obj.name;
+				for( auto const & member: cur_obj.members ) {
+					obj_info[cur_obj.name].members[member.first] = member.second;
+				}
 			}
 				
 			std::unordered_map<std::string, obj_info_t> obj_to_string( daw::json::impl::value_t const & json_obj ) {
