@@ -191,7 +191,11 @@ namespace daw {
 				val_info_t val_info;
 				val_info.name = "element_" + cur_obj.name;
 				auto const & arry = cur_item.get_array( );
-				val_info.type = arry.front( ).type( );
+				if( arry.empty( ) ) {
+					val_info.type = daw::json::impl::value_t::value_types::null;
+				} else {
+					val_info.type = arry.front( ).type( );
+				}
 				switch( val_info.type ) {
 					case value_t::value_types::array: {
 						obj_state.has_arrays = true;

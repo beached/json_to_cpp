@@ -6,6 +6,8 @@ include( ExternalProject )
 
 find_package( Boost 1.58.0 COMPONENTS system date_time iostreams program_options filesystem regex unit_test_framework REQUIRED )
 
+find_package( CURL )
+
 enable_testing( )
 add_definitions( -DBOOST_TEST_DYN_LINK ) 
 
@@ -57,6 +59,15 @@ externalproject_add(
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/install
 )
 
+externalproject_add(
+    temp_file_prj
+    GIT_REPOSITORY "https://github.com/beached/libtemp_file.git"
+    SOURCE_DIR "${CMAKE_BINARY_DIR}/dependencies/temp_file"
+    GIT_TAG "master"
+    INSTALL_DIR "${CMAKE_BINARY_DIR}/install"
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/install
+)
+
 set( HEADER_FOLDER "include" )
 set( SOURCE_FOLDER "src" )
 set( TEST_FOLDER "tests" )
@@ -64,7 +75,7 @@ set( TEST_FOLDER "tests" )
 include_directories( SYSTEM "${CMAKE_BINARY_DIR}/install/include" )
 include_directories( ${HEADER_FOLDER} )
 include_directories( SYSTEM ${OPENSSL_INCLUDE_DIR} )
-
+include_directories( SYSTEM ${CURL_INCLUDE_DIRS} )
 include_directories( SYSTEM ${Boost_INCLUDE_DIRS} )
 
 link_directories( "${CMAKE_BINARY_DIR}/install/lib" )
@@ -83,7 +94,8 @@ add_dependencies( json_to_cpp header_libraries_prj parse_json_prj char_range_prj
 target_link_libraries( json_to_cpp parse_json tz char_range ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 
 add_executable( json_to_cpp_bin ${HEADER_FILES} ${SOURCE_FOLDER}/main.cpp )
-target_link_libraries( json_to_cpp_bin json_to_cpp parse_json char_range ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+add_dependencies( json_to_cpp_bin temp_file_prj )
+target_link_libraries( json_to_cpp_bin json_to_cpp parse_json char_range temp_file ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} )
 
 install( TARGETS json_to_cpp DESTINATION lib )
 install( TARGETS json_to_cpp_bin DESTINATION bin )
