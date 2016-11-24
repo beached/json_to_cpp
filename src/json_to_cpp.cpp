@@ -83,13 +83,17 @@ namespace daw {
 		namespace {
 			struct val_info_t {
 				std::string name;
+				bool is_array;
 				bool is_optional;
 				daw::json::impl::value_t::value_types type;
+				std::string type_string;
 
 				val_info_t( ):
 					name{ },
+					is_array{ false }, 
 					is_optional{ false },
-					type{ daw::json::impl::value_t::value_types::null } { }
+					type{ daw::json::impl::value_t::value_types::null },
+					type_string{ "" } { }
 
 			};	// val_info_t;
 
@@ -153,6 +157,7 @@ namespace daw {
 					switch( val_info.type ) {
 						case value_t::value_types::array: 
 							obj_state.has_arrays = true;
+							val_info.is_array = true;
 							parse_json_array( val_info.name, member.second, obj_info, obj_state );
 						break;
 						case value_t::value_types::object: 
@@ -164,9 +169,11 @@ namespace daw {
 						case value_t::value_types::string:
 							obj_state.has_strings = true;
 						break;
+						case value_t::value_types::null:
+							val_info.is_optional = true;
+						break;
 						case value_t::value_types::real:
 						case value_t::value_types::boolean:
-						case value_t::value_types::null:
 						break;
 					}
 				}
@@ -188,6 +195,7 @@ namespace daw {
 				switch( val_info.type ) {
 					case value_t::value_types::array: {
 						obj_state.has_arrays = true;
+						val_info.is_array = true;
 						for( auto const & item: arry ) {
 							parse_json_array( val_info.name, item, obj_info, obj_state );
 						}
@@ -204,9 +212,11 @@ namespace daw {
 					case value_t::value_types::string:
 						obj_state.has_strings = true;
 					break;
+					case value_t::value_types::null:
+						val_info.is_optional = true;
+					break;
 					case value_t::value_types::real:
 					case value_t::value_types::boolean:
-					case value_t::value_types::null:
 					break;
 				}
 
@@ -378,7 +388,11 @@ namespace daw {
 						if( cur_obj.is_array ) {
 							ss << "std::vector<";
 						}
-						ss << member_type;
+						if( member.type == daw::json::impl::value_t::value_types::object ) {
+							ss << member.name << "_t";
+						} else {
+							ss << member_type;
+						}
 						if( cur_obj.is_array ) {
 							ss << ">";
 						} 
