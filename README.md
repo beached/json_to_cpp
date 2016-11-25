@@ -3,7 +3,7 @@ This program will take either a json file or a URL to a web service and build C+
 
 # Requirements
 * CMake >= 2.8.12 https://cmake.org/
-* Boost >= 1.58 https://www.boost.com/
+* Boost >= 1.58 https://www.boost.org/
 * Curl https://curl.haxx.se/
 
 Both Boost and Curl are often packaged within a Linux distribution and available for Windows/Mac
