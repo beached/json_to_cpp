@@ -49,6 +49,27 @@ namespace daw {
 		};
 
 		namespace {
+			/// Add a "json_" prefix to C++ keywords
+			std::string replace_keywords( std::string name ) {
+				static std::set<std::string> const keywords = {
+					"alignas", "alignof", "and", "and_eq", "asm", "atomic_cancel", "atomic_commit", "atomic_noexcept", "auto", "bitand", 
+					"bitor", "bool", "break", "case", "catch", "char", "char16_t", "char32_t", "class", "compl", 
+					"concept", "const", "constexpr", "const_cast", "continue", "decltype", "default", "delete", "do", "double", 
+					"dynamic_cast", "else", "enum", "explicit", "export", "extern", "false", "float", "for", "friend", 
+					"goto", "if", "import", "inline", "int", "long", "module", "mutable", "namespace", "new",  
+					"noexcept", "not", "not_eq", "nullptr", "operator", "or", "or_eq", "private", "protected", "public",  
+					"register", "reinterpret_cast", "requires", "return", "short", "signed", "sizeof", "static", "static_assert", "static_cast",  
+					"struct", "switch", "synchronized", "template", "this", "thread_local", "throw", "true", "try", "typedef", 
+					"typeid", "typename", "union", "unsigned", "using", "virtual", "void", "volatile", "wchar_t", "while",  
+					"xor", "xor_eq"
+				}; 
+					
+				if( keywords.count( name ) > 0 ) {
+					name = "json_" + name;
+				}
+				return name;
+			}
+
 			namespace types {
 				struct type_info_t;
 
@@ -84,22 +105,22 @@ namespace daw {
 					}
 
 					template<typename Derived>
-					ti_value( Derived other ): value{ new Derived( std::move( other ) ) } { }
+						ti_value( Derived other ): value{ new Derived( std::move( other ) ) } { }
 
 					template<typename Derived>
-					ti_value & operator=( Derived rhs ) {
-						value = new Derived( std::move( rhs ) );
-						return *this;
-					}
+						ti_value & operator=( Derived rhs ) {
+							value = new Derived( std::move( rhs ) );
+							return *this;
+						}
 				};
 
 				template<typename Derived, typename... Args>
-				ti_value create_ti_value( Args&&... args ) {
-					ti_value result;
-					auto tmp = new Derived( std::forward<Args>( args )... );
-					result.value = std::exchange( tmp, nullptr );
-					return result;
-				}
+					ti_value create_ti_value( Args&&... args ) {
+						ti_value result;
+						auto tmp = new Derived( std::forward<Args>( args )... );
+						result.value = std::exchange( tmp, nullptr );
+						return result;
+					}
 
 				struct type_info_t {
 					bool is_optional;
@@ -265,7 +286,7 @@ namespace daw {
 			std::vector<types::ti_object>::iterator find_by_name( std::vector<types::ti_object> & obj_info, boost::string_view name ) {
 				return std::find_if( obj_info.begin( ), obj_info.end( ), [n=name.to_string( )]( auto const & item ) {
 						return n == item.name( );
-				} );
+						} );
 			}
 
 			void add_or_merge( std::vector<types::ti_object> & obj_info, types::ti_object const & obj ) {
@@ -320,33 +341,33 @@ namespace daw {
 						obj_state.has_optionals = true;
 						return types::create_ti_value<types::ti_null>( );
 					case value_t::value_types::object: {
-						auto result = types::ti_object{ cur_name.to_string( ) + "_t" };
-						for( auto const & child: current_item.get_object( ) ) {
-							std::string const child_name = child.first.to_string( );
-							result.children[child_name] = parse_json_object( child.second, child_name, obj_info, obj_state );
-						}
-						add_or_merge( obj_info, result );
-						return result;
-					}	
+					   auto result = types::ti_object{ cur_name.to_string( ) + "_t" };
+					   for( auto const & child: current_item.get_object( ) ) {
+						   std::string const child_name = replace_keywords( child.first.to_string( ) );
+						   result.children[child_name] = parse_json_object( child.second, child_name, obj_info, obj_state );
+					   }
+					   add_or_merge( obj_info, result );
+					   return result;
+				   }	
 					case value_t::value_types::array: {
-						obj_state.has_arrays = true;
-						auto result = types::create_ti_value<types::ti_array>( );
-						auto arry = current_item.get_array( );
-						auto const child_name = cur_name.to_string( ) + "_element";
-						if( arry.empty( ) ) {
-							result.children( )[child_name]  = types::create_ti_value<types::ti_null>( ); 
-						} else {
-							auto const last_item = arry.back( );
-							arry.pop_back( );
-							auto child = parse_json_object( last_item, child_name, obj_info, obj_state );
-							for( auto const & element: current_item.get_array( ) ) {
-								child = merge_array_values( child, parse_json_object( element, child_name, obj_info, obj_state ) );
-							}
-							result.children( )[child_name] = child;
-						}
-						return result;
-					}
-				}
+					  obj_state.has_arrays = true;
+					  auto result = types::create_ti_value<types::ti_array>( );
+					  auto arry = current_item.get_array( );
+					  auto const child_name = cur_name.to_string( ) + "_element";
+					  if( arry.empty( ) ) {
+						  result.children( )[child_name]  = types::create_ti_value<types::ti_null>( ); 
+					  } else {
+						  auto const last_item = arry.back( );
+						  arry.pop_back( );
+						  auto child = parse_json_object( last_item, child_name, obj_info, obj_state );
+						  for( auto const & element: current_item.get_array( ) ) {
+							  child = merge_array_values( child, parse_json_object( element, child_name, obj_info, obj_state ) );
+						  }
+						  result.children( )[child_name] = child;
+					  }
+					  return result;
+				  }
+}
 				throw std::runtime_error( "Unexpected exit point to parse_json_object2" );
 			}
 

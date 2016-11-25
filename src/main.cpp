@@ -40,7 +40,7 @@ namespace {
 		return totalBytes;
 	}
 
-	boost::optional<std::string> download( boost::string_view url ) {
+	boost::optional<std::string> download( boost::string_view url, boost::string_view user_agent ) {
 		struct curl_slist *headers = nullptr;
 		curl_slist_append( headers, "Accept: application/json" );  
 		curl_slist_append( headers, "Content-Type: application/json" );
@@ -53,6 +53,8 @@ namespace {
 		curl_easy_setopt( curl, CURLOPT_HTTPHEADER, headers );
 		curl_easy_setopt( curl, CURLOPT_HTTPGET, 1 ); 
 		curl_easy_setopt( curl, CURLOPT_HTTPHEADER, headers); 
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent.data( ) );
+		  
 		// Set remote URL.
 		curl_easy_setopt( curl, CURLOPT_URL, url.data( ) );
 
@@ -100,7 +102,8 @@ int main( int argc, char ** argv ) {
 		( "help", "print option descriptions" )
 		( "in_file", boost::program_options::value<std::string>( ), "json source file path or url" )
 		( "out_file", boost::program_options::value<std::string>( ), "output c++ file" )
-		( "use_jsonlink", boost::program_options::value<bool>( )->default_value( true ), "Use JsonLink serializaion/deserialization" );
+		( "use_jsonlink", boost::program_options::value<bool>( )->default_value( true ), "Use JsonLink serializaion/deserialization" )
+		( "user_agent", boost::program_options::value<std::string>( )->default_value( "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.100 Safari/537.36" ), "User agent to use when downloading via URL" );
 
 	boost::program_options::variables_map vm;
 	try {
@@ -123,9 +126,10 @@ int main( int argc, char ** argv ) {
 		exit( EXIT_FAILURE );
 	}
 	auto uri = vm["in_file"].as<std::string>( );
+	std::cerr << "Opening '" << uri << "'\n";
 	std::string json_str;
 	if( is_url( uri ) ) {
-		auto tmp = download( uri );
+		auto tmp = download( uri, vm["user_agent"].as<std::string>( ) );
 		if( tmp ) {
 			json_str = *tmp;
 		} else {
