@@ -275,17 +275,23 @@ namespace daw {
 			void add_or_merge( std::vector<types::ti_object> & obj_info, types::ti_object const & obj ) {
 				auto pos = find_by_name( obj_info, obj.name( ) );
 				if( obj_info.end( ) == pos ) {
+					// First time
 					obj_info.push_back( obj );
 					return;
 				}
-				for( auto const & child: obj.children ) {
-					// Do not overwrite if type is null.  If the destination is already null it doesn't matter
-					types::ti_object & child_obj = *pos;
-					if( !(daw::json::impl::value_t::value_types::null == child.second.type( ) && pos->children.count( child.first ) > 0) ) {
-						child_obj.children[child.first] = child.second;
-					} else {
-						child_obj.children[child.first].is_optional( ) = true;
-					}
+				using child_t = std::vector<std::pair<std::string, types::ti_value>>;
+				child_t lhs, rhs;
+				types::ti_object & orig = *pos;
+				std::copy( orig.children.begin( ), orig.children.end( ), std::back_inserter( lhs ) );
+				std::copy( obj.children.begin( ), obj.children.end( ), std::back_inserter( rhs ) );
+				static auto const comp = []( auto const & c1, auto const & c2 ) { return c1.first < c2.first; };
+				std::sort( lhs.begin( ), lhs.end( ), comp );
+				std::sort( rhs.begin( ), rhs.end( ), comp );
+				child_t diff;
+				std::set_difference( lhs.begin( ), lhs.end( ), rhs.begin( ), rhs.end( ), std::back_inserter( diff ), comp );
+				for( auto & child: diff ) {
+					child.second.is_optional( ) = true;
+					orig.children[child.first] = child.second;
 				}
 			}
 
@@ -297,7 +303,7 @@ namespace daw {
 					result.is_optional( ) = true;
 				} else if( b.type( ) == value_t::value_types::null ) {
 					result.is_optional( ) = true;
-				}
+				} 
 				return result;
 			}
 
@@ -336,11 +342,11 @@ namespace daw {
 						} else {
 							auto const last_item = arry.back( );
 							arry.pop_back( );
-							auto children = parse_json_object( last_item, child_name, obj_info, obj_state );
+							auto child = parse_json_object( last_item, child_name, obj_info, obj_state );
 							for( auto const & element: current_item.get_array( ) ) {
-								children = merge_array_values( children, parse_json_object( element, child_name, obj_info, obj_state ) );
+								child = merge_array_values( child, parse_json_object( element, child_name, obj_info, obj_state ) );
 							}
-							result.children( )[child_name] = children;
+							result.children( )[child_name] = child;
 						}
 						return result;
 					}
