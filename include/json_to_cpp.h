@@ -29,12 +29,11 @@
 
 namespace daw {
 	namespace json_to_cpp {
-		struct config_t {
-			bool enable_comments;
+		struct config_t final {
 			bool enable_jsonlink;
-			config_t( );
-			~config_t( );
 
+			config_t( ) = default;
+			~config_t( ) = default;
 			config_t( config_t const & ) = default;
 			config_t( config_t && ) = default;
 			config_t & operator=( config_t const & ) = default;

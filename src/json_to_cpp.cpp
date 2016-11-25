@@ -35,11 +35,7 @@
 
 namespace daw {
 	namespace json_to_cpp {
-		config_t::config_t( ):
-				enable_comments{ true },
-				enable_jsonlink{ true } { }
 
-		config_t::~config_t( ) { }
 		struct state_t {
 			bool has_arrays;
 			bool has_integrals;

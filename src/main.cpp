@@ -22,6 +22,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/optional.hpp>
+#include <boost/program_options.hpp>
 #include <boost/utility/string_view.hpp>
 #include <cstdlib>
 #include <curl/curl.h>
@@ -93,11 +94,35 @@ namespace {
 
 int main( int argc, char ** argv ) {
 	using namespace daw::json_to_cpp;
-	if( argc != 2 ) {
-		std::cerr << "Must supply a url or a file as the json source\n";
+
+	boost::program_options::options_description desc{ "Options" };
+	desc.add_options( )
+		( "help", "print option descriptions" )
+		( "in_file", boost::program_options::value<std::string>( ), "json source file path or url" )
+		( "out_file", boost::program_options::value<std::string>( ), "output c++ file" )
+		( "use_jsonlink", boost::program_options::value<bool>( )->default_value( true ), "Use JsonLink serializaion/deserialization" );
+
+	boost::program_options::variables_map vm;
+	try {
+		boost::program_options::store( boost::program_options::parse_command_line( argc, argv, desc ), vm );
+		
+		if( vm.count( "help" ) ) {
+			std::cout << "Command line options\n" << desc << std::endl;
+			return EXIT_SUCCESS;
+		}
+		boost::program_options::notify( vm );
+	} catch( boost::program_options::error const & po_error ) {
+		std::cerr << "ERROR: " << po_error.what( ) << '\n';
+		std::cerr << desc << std::endl;
+		return EXIT_FAILURE;
+	}
+
+	if( !vm.count( "in_file" ) ) {
+		std::cout << "Missing in_file parameter\n";
+		std::cout << "Command line options\n" << desc << std::endl;
 		exit( EXIT_FAILURE );
 	}
-	std::string const uri{ argv[1] };
+	auto uri = vm["in_file"].as<std::string>( );
 	std::string json_str;
 	if( is_url( uri ) ) {
 		auto tmp = download( uri );
@@ -109,17 +134,30 @@ int main( int argc, char ** argv ) {
 		}
 	} else {
 		std::ifstream in_file;
-		in_file.open( argv[1] );
+		in_file.open( uri );
 		if( !in_file ) {
-			std::cerr << "Must supply valid json file on commandline\n";
+			std::cerr << "Could not open json in_file '" << uri << "'\n";
 			exit( EXIT_FAILURE );
 		}
 		std::copy( std::istream_iterator<char>{ in_file }, std::istream_iterator<char>{ }, std::back_inserter( json_str ) );
 		in_file.close( );
 	}
 	config_t config{ };
-	generate_cpp( json_str, std::cout, config );
-	std::cout << std::endl;
+	config.enable_jsonlink = vm["use_jsonlink"].as<bool>( );
+
+	if( vm.count( "out_file" ) ) {
+		std::ofstream out_file;
+		auto const out_filename = vm["out_file"].as<std::string>( );
+		out_file.open( out_filename, std::ios::out | std::ios::trunc );
+		if( !out_file ) {
+			std::cerr << "Could not open cpp out_file '" << out_filename << "'\n";
+			exit( EXIT_FAILURE );
+		}
+		generate_cpp( json_str, out_file, config );	
+	} else {
+		generate_cpp( json_str, std::cout, config );
+		std::cout << std::endl;
+	}
 
 	return EXIT_SUCCESS;
 }
