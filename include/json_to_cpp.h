@@ -29,19 +29,16 @@
 
 namespace daw {
 	namespace json_to_cpp {
-		struct config_t: public daw::json::JsonLink<config_t> {
+		struct config_t {
 			bool enable_comments;
 			bool enable_jsonlink;
-
 			config_t( );
 			~config_t( );
-			config_t( config_t const & other );
-			config_t( config_t && other );
-			
+
+			config_t( config_t const & ) = default;
+			config_t( config_t && ) = default;
 			config_t & operator=( config_t const & ) = default;
 			config_t & operator=( config_t && ) = default;
-		private:
-			void set_links( );
 		};	// config_t
 
 		void generate_cpp( boost::string_view json_string, std::ostream & ss, config_t const & config );
