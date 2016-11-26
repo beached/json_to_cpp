@@ -31,6 +31,11 @@ namespace daw {
 	namespace json_to_cpp {
 		struct config_t final {
 			bool enable_jsonlink;
+			std::ostream * header_stream;
+			std::ostream * cpp_stream;
+			std::string header_filename;
+			std::string cpp_filename;
+			bool separate_files;
 
 			config_t( ) = default;
 			~config_t( ) = default;
@@ -38,9 +43,13 @@ namespace daw {
 			config_t( config_t && ) = default;
 			config_t & operator=( config_t const & ) = default;
 			config_t & operator=( config_t && ) = default;
+
+			std::ostream & header_file( );
+			std::ostream & cpp_file( );
+
 		};	// config_t
 
-		void generate_cpp( boost::string_view json_string, std::ostream & ss, config_t const & config );
+		void generate_cpp( boost::string_view json_string, config_t & config );
 	}	// namespace json_to_cpp
 }    // namespace daw
 

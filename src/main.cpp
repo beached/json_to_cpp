@@ -53,7 +53,7 @@ namespace {
 		curl_easy_setopt( curl, CURLOPT_HTTPHEADER, headers );
 		curl_easy_setopt( curl, CURLOPT_HTTPGET, 1 ); 
 		curl_easy_setopt( curl, CURLOPT_HTTPHEADER, headers); 
-		curl_easy_setopt(curl, CURLOPT_USERAGENT, user_agent.data( ) );
+		curl_easy_setopt( curl, CURLOPT_USERAGENT, user_agent.data( ) );
 		  
 		// Set remote URL.
 		curl_easy_setopt( curl, CURLOPT_URL, url.data( ) );
@@ -101,8 +101,10 @@ int main( int argc, char ** argv ) {
 	desc.add_options( )
 		( "help", "print option descriptions" )
 		( "in_file", boost::program_options::value<std::string>( ), "json source file path or url" )
-		( "out_file", boost::program_options::value<std::string>( ), "output c++ file" )
+		( "cpp_file", boost::program_options::value<std::string>( ), "output c++ file" )
+		( "header_file", boost::program_options::value<std::string>( ), "output c++ header file.  If not specified uses cpp_file" )
 		( "use_jsonlink", boost::program_options::value<bool>( )->default_value( true ), "Use JsonLink serializaion/deserialization" )
+
 		( "user_agent", boost::program_options::value<std::string>( )->default_value( "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.100 Safari/537.36" ), "User agent to use when downloading via URL" );
 
 	boost::program_options::variables_map vm;
@@ -146,21 +148,39 @@ int main( int argc, char ** argv ) {
 		in_file.close( );
 	}
 	config_t config{ };
+	config.cpp_stream = &std::cout;
+	config.header_stream = &std::cout;
 	config.enable_jsonlink = vm["use_jsonlink"].as<bool>( );
+	std::ofstream cpp_file;
+	std::ofstream header_file;
 
-	if( vm.count( "out_file" ) ) {
-		std::ofstream out_file;
-		auto const out_filename = vm["out_file"].as<std::string>( );
-		out_file.open( out_filename, std::ios::out | std::ios::trunc );
-		if( !out_file ) {
-			std::cerr << "Could not open cpp out_file '" << out_filename << "'\n";
+	if( vm.count( "cpp_file" ) > 0 ) {
+		auto const cpp_filename = vm["cpp_file"].as<std::string>( );
+		cpp_file.open( cpp_filename, std::ios::out | std::ios::trunc );
+		if( !cpp_file ) {
+			std::cerr << "Could not open cpp_file '" << cpp_filename << "' for writing\n";
 			exit( EXIT_FAILURE );
 		}
-		generate_cpp( json_str, out_file, config );	
-	} else {
-		generate_cpp( json_str, std::cout, config );
-		std::cout << std::endl;
+		config.cpp_stream = &cpp_file;
+		config.cpp_filename = cpp_filename;
+
+		if( vm.count( "header_file" ) > 0 ) {
+			auto const header_filename = vm["header_file"].as<std::string>( );
+			header_file.open( header_filename, std::ios::out | std::ios::trunc );
+			if( !header_file ) {
+				std::cerr << "Could not open header_file '" << cpp_filename << "' for writing\n";
+				exit( EXIT_FAILURE );
+			}
+			config.header_stream = &header_file;
+			config.header_filename = header_filename;
+			config.separate_files = true;
+		} else {
+			config.header_stream = &header_file;
+			config.header_filename = cpp_filename;
+			config.separate_files = false;
+		}
 	}
+	generate_cpp( json_str, config );
 
 	return EXIT_SUCCESS;
 }

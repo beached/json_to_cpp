@@ -24,7 +24,6 @@
 #include <algorithm>
 #include <boost/utility/string_view.hpp>
 #include <limits>
-#include <ostream>
 #include <map>
 #include <string>
 #include <tuple>
@@ -37,6 +36,14 @@
 
 namespace daw {
 	namespace json_to_cpp {
+		std::ostream & config_t::header_file( ) {
+			return *header_stream;
+		}
+
+		std::ostream & config_t::cpp_file( ) {
+			return *cpp_stream;
+		}
+
 
 		struct state_t {
 			bool has_arrays;
@@ -386,139 +393,148 @@ namespace daw {
 				return result;
 			}
 
-			void generate_default_constructor( bool definition, std::ostream & ss, types::ti_object const & cur_obj ) {
+			void generate_default_constructor( bool definition, config_t & config, types::ti_object const & cur_obj ) {
 				if( definition ) {
-					ss << cur_obj.object_name << "::" << cur_obj.object_name << "( ):\n";
-					ss << "\t\tdaw::json::JsonLink<" << cur_obj.object_name << ">{ }";
+					config.cpp_file( ) << cur_obj.object_name << "::" << cur_obj.object_name << "( ):\n";
+					config.cpp_file( ) << "\t\tdaw::json::JsonLink<" << cur_obj.object_name << ">{ }";
 					for( auto const & child: cur_obj.children ) {
-						ss << ",\n\t\t" << child.first << "{ }";
+						config.cpp_file( ) << ",\n\t\t" << child.first << "{ }";
 					}
-					ss << " {\n\n\tset_links( );\n}\n\n";
+					config.cpp_file( ) << " {\n\n\tset_links( );\n}\n\n";
 				} else {
-					ss << "\t" << cur_obj.object_name << "( );\n";
+					config.header_file( ) << "\t" << cur_obj.object_name << "( );\n";
 				}
 			}
 
-			void generate_copy_constructor( bool definition, std::ostream & ss, types::ti_object const & cur_obj ) {
+			void generate_copy_constructor( bool definition, config_t & config, types::ti_object const & cur_obj ) {
 				if( definition ) {
-					ss << cur_obj.object_name << "::" << cur_obj.object_name << "( " << cur_obj.object_name << " const & other ):\n";
-					ss << "\t\tdaw::json::JsonLink<" << cur_obj.object_name << ">{ }";
+					config.cpp_file( ) << cur_obj.object_name << "::" << cur_obj.object_name << "( " << cur_obj.object_name << " const & other ):\n";
+					config.cpp_file( ) << "\t\tdaw::json::JsonLink<" << cur_obj.object_name << ">{ }";
 					for( auto const & child: cur_obj.children ) {
-						ss << ",\n\t\t" << child.first << "{ other." << child.first << " }";
+						config.cpp_file( ) << ",\n\t\t" << child.first << "{ other." << child.first << " }";
 					}
-					ss << " {\n\n\tset_links( );\n}\n\n";
+					config.cpp_file( ) << " {\n\n\tset_links( );\n}\n\n";
 				} else {
-					ss << "\t" << cur_obj.object_name << "( " << cur_obj.object_name << " const & other );\n";
+					config.header_file( ) << "\t" << cur_obj.object_name << "( " << cur_obj.object_name << " const & other );\n";
 				}
 			}
 
-			void generate_move_constructor( bool definition, std::ostream & ss, types::ti_object const & cur_obj ) {
+			void generate_move_constructor( bool definition, config_t & config, types::ti_object const & cur_obj ) {
 				if( definition ) {
-					ss << cur_obj.object_name << "::" << cur_obj.object_name << "( " << cur_obj.object_name << " && other ):\n";
-					ss << "\t\tdaw::json::JsonLink<" << cur_obj.object_name << ">{ }";
+					config.cpp_file( ) << cur_obj.object_name << "::" << cur_obj.object_name << "( " << cur_obj.object_name << " && other ):\n";
+					config.cpp_file( ) << "\t\tdaw::json::JsonLink<" << cur_obj.object_name << ">{ }";
 					for( auto const & child: cur_obj.children ) {
-						ss << ",\n\t\t" << child.first << "{ std::move( other." << child.first << " ) }";
+						config.cpp_file( ) << ",\n\t\t" << child.first << "{ std::move( other." << child.first << " ) }";
 					}
-					ss << " {\n\n\tset_links( );\n}\n\n";
+					config.cpp_file( ) << " {\n\n\tset_links( );\n}\n\n";
 				} else {
-					ss << "\t" << cur_obj.object_name << "( " << cur_obj.object_name << " && other );\n";
+					config.header_file( ) << "\t" << cur_obj.object_name << "( " << cur_obj.object_name << " && other );\n";
 				}
 			}
 
-			void generate_destructor( bool definition, std::ostream & ss, types::ti_object const & cur_obj ) {
+			void generate_destructor( bool definition, config_t & config, types::ti_object const & cur_obj ) {
 				if( definition ) {
-					ss << cur_obj.object_name << "::~" << cur_obj.object_name << "( ) { }\n\n";
+					config.cpp_file( ) << cur_obj.object_name << "::~" << cur_obj.object_name << "( ) { }\n\n";
 				} else {
-					ss << "\t~" << cur_obj.object_name << "( );\n";
+					config.header_file( ) << "\t~" << cur_obj.object_name << "( );\n";
 				}
 			}
 
-			void generate_set_links( bool definition, std::ostream & ss, types::ti_object const & cur_obj ) {
+			void generate_set_links( bool definition, config_t & config, types::ti_object const & cur_obj ) {
 				if( definition ) {
-					ss << "void " << cur_obj.object_name << "::set_links( ) {\n";
+					config.cpp_file( ) << "void " << cur_obj.object_name << "::set_links( ) {\n";
 					for( auto const & child: cur_obj.children ) {
-						ss << "\tlink_" << to_string( child.second.type( ) );
-						ss << "( \"" << child.first << "\", " << child.first << " );\n";
+						config.cpp_file( ) << "\tlink_" << to_string( child.second.type( ) );
+						config.cpp_file( ) << "( \"" << child.first << "\", " << child.first << " );\n";
 					}
-					ss << "}\n\n";
+					config.cpp_file( ) << "}\n\n";
 				} else {
-					ss << "private:\n";
-					ss << "\tvoid set_links( );\n";
+					config.header_file( ) << "private:\n";
+					config.header_file( ) << "\tvoid set_links( );\n";
 				}
 			}
 
-			void generate_jsonlink( bool definition, std::ostream & ss, types::ti_object const & cur_obj ) {
-				generate_default_constructor( definition, ss, cur_obj );
-				generate_copy_constructor( definition, ss, cur_obj );
-				generate_move_constructor( definition, ss, cur_obj );
-				generate_destructor( definition, ss, cur_obj );
+			void generate_jsonlink( bool definition, config_t & config, types::ti_object const & cur_obj ) {
+				generate_default_constructor( definition, config, cur_obj );
+				generate_copy_constructor( definition, config, cur_obj );
+				generate_move_constructor( definition, config, cur_obj );
+				generate_destructor( definition, config, cur_obj );
 				if( !definition ) {
 					auto const obj_type = cur_obj.name( );
-					ss << "\n\t" << obj_type << " & operator=( " << obj_type << " const & ) = default;\n";
-					ss << "\t" << obj_type << " & operator=( " << obj_type << " && ) = default;\n";
+					config.header_file( ) << "\n\t" << obj_type << " & operator=( " << obj_type << " const & ) = default;\n";
+					config.header_file( ) << "\t" << obj_type << " & operator=( " << obj_type << " && ) = default;\n";
 				}
-				generate_set_links( definition, ss, cur_obj );
+				generate_set_links( definition, config, cur_obj );
 			}
 
 
-			void generate_includes( std::ostream & ss, config_t const & config, state_t const & obj_state ) {
-				if( obj_state.has_optionals ) ss << "#include <boost/optional.hpp>\n";
-				if( obj_state.has_integrals ) ss << "#include <cstdint>\n";
-				if( obj_state.has_strings ) ss << "#include <string>\n";
-				if( obj_state.has_arrays ) ss << "#include <vector>\n";
-				if( config.enable_jsonlink ) ss << "#include <daw/json/daw_json_link.h>\n";
-				ss << '\n';
+			void generate_includes( bool definition, config_t & config, state_t const & obj_state ) {
+				if( definition && config.separate_files ) {
+					config.cpp_file( ) << "#include \"" << config.header_filename << "\"\n\n";
+				} else {
+					if( config.separate_files ) {
+						config.header_file( ) << "#pragma once\n\n";
+					}
+					if( obj_state.has_optionals ) config.header_file( ) << "#include <boost/optional.hpp>\n";
+					if( obj_state.has_integrals ) config.header_file( ) << "#include <cstdint>\n";
+					if( obj_state.has_strings ) config.header_file( ) << "#include <string>\n";
+					if( obj_state.has_arrays ) config.header_file( ) << "#include <vector>\n";
+					if( config.enable_jsonlink ) config.header_file( ) << "#include <daw/json/daw_json_link.h>\n";
+					config.header_file( ) << '\n';
+				}
 			}
 
-			void generate_declarations( std::vector<types::ti_object> const & obj_info, std::ostream & ss, config_t const & config, state_t const & obj_state ) {
+			void generate_declarations( std::vector<types::ti_object> const & obj_info, config_t & config, state_t const & obj_state ) {
 				for( auto const & cur_obj: obj_info ) {
 					auto const obj_type = cur_obj.name( );
-					ss << "struct " << obj_type;
+					config.header_file( ) << "struct " << obj_type;
 					if( config.enable_jsonlink ) {
-						ss << ": public daw::json::JsonLink<" << obj_type << ">";
+						config.header_file( ) << ": public daw::json::JsonLink<" << obj_type << ">";
 					}
-					ss << " {\n";
+					config.header_file( ) << " {\n";
 					for( auto const & child: cur_obj.children ) {
 						auto const & member_name = child.first;
 						auto const & member_type = child.second.name( );
-						ss << "\t";
+						config.header_file( ) << "\t";
 						if( child.second.is_optional( ) ) {
-							ss << "boost::optional<" << member_type << ">";
+							config.header_file( ) << "boost::optional<" << member_type << ">";
 						} else {
-							ss << member_type;
+							config.header_file( ) << member_type;
 						}
-						ss << " " << member_name << ";\n";
+						config.header_file( ) << " " << member_name << ";\n";
 					}
-					ss << "\n";
+					config.header_file( ) << "\n";
 					if( config.enable_jsonlink ) {
-						generate_jsonlink( false, ss, cur_obj );
+						generate_jsonlink( false, config, cur_obj );
 					}
-					ss << "};" << "\t// " << obj_type << "\n\n";
+					config.header_file( ) << "};" << "\t// " << obj_type << "\n\n";
 				}
 			}
 
-			void generate_definitions( std::vector<types::ti_object> const & obj_info, std::ostream & ss, config_t const & config, state_t const & obj_state ) {
+			void generate_definitions( std::vector<types::ti_object> const & obj_info, config_t & config, state_t const & obj_state ) {
 				for( auto const & cur_obj: obj_info ) {
-					generate_jsonlink( true, ss, cur_obj );
+					generate_jsonlink( true, config, cur_obj );
 				}
 			}
 
-			void generate_code( std::vector<types::ti_object> const & obj_info, std::ostream & ss, config_t const & config, state_t const & obj_state ) {
-				ss << "// Code auto generated from json file.\n";
-				generate_includes( ss, config, obj_state );
-				generate_declarations( obj_info, ss, config, obj_state );
+			void generate_code( std::vector<types::ti_object> const & obj_info, config_t & config, state_t const & obj_state ) {
+				config.header_file( ) << "// Code auto generated from json file.\n\n";
+				config.cpp_file( ) << "// Code auto generated from json file.\n\n";
+				generate_includes( true, config, obj_state );
+				generate_includes( false, config, obj_state );
+				generate_declarations( obj_info, config, obj_state );
 				if( config.enable_jsonlink ) {
-					generate_definitions( obj_info, ss, config, obj_state );
+					generate_definitions( obj_info, config, obj_state );
 				}
 			}
 
 		}	// namespace anonymous
 
-		void generate_cpp( boost::string_view json_string, std::ostream & ss, config_t const & config ) {
+		void generate_cpp( boost::string_view json_string, config_t & config ) {
 			state_t obj_state;
 			auto json_obj = daw::json::parse_json( json_string );
 			auto obj_info = parse_json_object( json_obj, obj_state );
-			generate_code( obj_info, ss, config, obj_state );
+			generate_code( obj_info, config, obj_state );
 		}
 	}	// namespace json_to_cpp
 }    // namespace daw
