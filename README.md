@@ -27,7 +27,10 @@ cmake --build .
 # Running
 To output the C++ code to the terminal one just needs to type ```json_to_cpp_bin --in_file jsonfile.json```
 
-```  --help                                print option descriptions
+```  
+Command line options
+Options:
+  --help                                print option descriptions
   --in_file arg                         json source file path or url
   --use_jsonlink arg (=1)               Use JsonLink serializaion/deserializati
                                         on
