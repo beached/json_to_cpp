@@ -126,7 +126,6 @@ int main( int argc, char ** argv ) {
 		exit( EXIT_FAILURE );
 	}
 	auto uri = vm["in_file"].as<std::string>( );
-	std::cerr << "Opening '" << uri << "'\n";
 	std::string json_str;
 	if( is_url( uri ) ) {
 		auto tmp = download( uri, vm["user_agent"].as<std::string>( ) );
