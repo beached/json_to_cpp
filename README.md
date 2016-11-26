@@ -13,6 +13,9 @@ This program will take either a json file or a URL to a web service and build C+
 * Boost >= 1.58 https://www.boost.org/
 * Curl https://curl.haxx.se/
 
+# Testing
+Currently it is known to build on clang 3.8.1 and gcc 6.2.0
+
 Both Boost and Curl are often packaged within a Linux distribution and available for Windows/Mac
 
 # Building
