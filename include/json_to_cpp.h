@@ -23,6 +23,7 @@
 #pragma once
 
 #include <boost/utility/string_view.hpp>
+#include <boost/filesystem/path.hpp>
 #include <ostream>
 
 #include <daw/json/daw_json_link.h>
@@ -33,8 +34,9 @@ namespace daw {
 			bool enable_jsonlink;
 			std::ostream * header_stream;
 			std::ostream * cpp_stream;
-			std::string header_filename;
-			std::string cpp_filename;
+			boost::filesystem::path cpp_path;
+			boost::filesystem::path header_path;
+			boost::filesystem::path json_path;
 			bool separate_files;
 
 			config_t( ) = default;

@@ -394,6 +394,9 @@ namespace daw {
 			}
 
 			void generate_default_constructor( bool definition, config_t & config, types::ti_object const & cur_obj ) {
+				if( !config.enable_jsonlink ) {
+					return;
+				}
 				if( definition ) {
 					config.cpp_file( ) << cur_obj.object_name << "::" << cur_obj.object_name << "( ):\n";
 					config.cpp_file( ) << "\t\tdaw::json::JsonLink<" << cur_obj.object_name << ">{ }";
@@ -407,6 +410,9 @@ namespace daw {
 			}
 
 			void generate_copy_constructor( bool definition, config_t & config, types::ti_object const & cur_obj ) {
+				if( !config.enable_jsonlink ) {
+					return;
+				}
 				if( definition ) {
 					config.cpp_file( ) << cur_obj.object_name << "::" << cur_obj.object_name << "( " << cur_obj.object_name << " const & other ):\n";
 					config.cpp_file( ) << "\t\tdaw::json::JsonLink<" << cur_obj.object_name << ">{ }";
@@ -420,6 +426,9 @@ namespace daw {
 			}
 
 			void generate_move_constructor( bool definition, config_t & config, types::ti_object const & cur_obj ) {
+				if( !config.enable_jsonlink ) {
+					return;
+				}
 				if( definition ) {
 					config.cpp_file( ) << cur_obj.object_name << "::" << cur_obj.object_name << "( " << cur_obj.object_name << " && other ):\n";
 					config.cpp_file( ) << "\t\tdaw::json::JsonLink<" << cur_obj.object_name << ">{ }";
@@ -433,6 +442,9 @@ namespace daw {
 			}
 
 			void generate_destructor( bool definition, config_t & config, types::ti_object const & cur_obj ) {
+				if( !config.enable_jsonlink ) {
+					return;
+				}
 				if( definition ) {
 					config.cpp_file( ) << cur_obj.object_name << "::~" << cur_obj.object_name << "( ) { }\n\n";
 				} else {
@@ -441,6 +453,9 @@ namespace daw {
 			}
 
 			void generate_set_links( bool definition, config_t & config, types::ti_object const & cur_obj ) {
+				if( !config.enable_jsonlink ) {
+					return;
+				}
 				if( definition ) {
 					config.cpp_file( ) << "void " << cur_obj.object_name << "::set_links( ) {\n";
 					for( auto const & child: cur_obj.children ) {
@@ -455,6 +470,9 @@ namespace daw {
 			}
 
 			void generate_jsonlink( bool definition, config_t & config, types::ti_object const & cur_obj ) {
+				if( !config.enable_jsonlink ) {
+					return;
+				}
 				generate_default_constructor( definition, config, cur_obj );
 				generate_copy_constructor( definition, config, cur_obj );
 				generate_move_constructor( definition, config, cur_obj );
@@ -469,8 +487,20 @@ namespace daw {
 
 
 			void generate_includes( bool definition, config_t & config, state_t const & obj_state ) {
-				if( definition && config.separate_files ) {
-					config.cpp_file( ) << "#include \"" << config.header_filename << "\"\n\n";
+				{
+					std::string const header_message = "// Code auto generated from json file '" + config.json_path.string( ) + "'\n\n";
+					if( definition ) {
+						if( config.separate_files ) {
+							config.cpp_file( ) << header_message;
+						}
+					} else {
+						config.header_file( ) << header_message;
+					}
+				}
+				if( definition ) {
+					if( config.separate_files ) {
+						config.cpp_file( ) << "#include " << config.header_path.filename( ) << "\n\n";
+					}
 				} else {
 					if( config.separate_files ) {
 						config.header_file( ) << "#pragma once\n\n";
@@ -503,8 +533,8 @@ namespace daw {
 						}
 						config.header_file( ) << " " << member_name << ";\n";
 					}
-					config.header_file( ) << "\n";
 					if( config.enable_jsonlink ) {
+						config.header_file( ) << "\n";
 						generate_jsonlink( false, config, cur_obj );
 					}
 					config.header_file( ) << "};" << "\t// " << obj_type << "\n\n";
@@ -512,20 +542,19 @@ namespace daw {
 			}
 
 			void generate_definitions( std::vector<types::ti_object> const & obj_info, config_t & config, state_t const & obj_state ) {
+				if( !config.enable_jsonlink ) {
+					return;
+				}
 				for( auto const & cur_obj: obj_info ) {
 					generate_jsonlink( true, config, cur_obj );
 				}
 			}
 
 			void generate_code( std::vector<types::ti_object> const & obj_info, config_t & config, state_t const & obj_state ) {
-				config.header_file( ) << "// Code auto generated from json file.\n\n";
-				config.cpp_file( ) << "// Code auto generated from json file.\n\n";
 				generate_includes( true, config, obj_state );
 				generate_includes( false, config, obj_state );
 				generate_declarations( obj_info, config, obj_state );
-				if( config.enable_jsonlink ) {
-					generate_definitions( obj_info, config, obj_state );
-				}
+				generate_definitions( obj_info, config, obj_state );
 			}
 
 		}	// namespace anonymous
