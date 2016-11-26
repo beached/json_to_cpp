@@ -25,9 +25,11 @@
 #include <boost/utility/string_view.hpp>
 #include <limits>
 #include <ostream>
+#include <map>
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <daw/json/daw_json_link.h>
 
@@ -51,7 +53,7 @@ namespace daw {
 		namespace {
 			/// Add a "json_" prefix to C++ keywords
 			std::string replace_keywords( std::string name ) {
-				static std::set<std::string> const keywords = {
+				static std::unordered_set<std::string> const keywords = {
 					"alignas", "alignof", "and", "and_eq", "asm", "atomic_cancel", "atomic_commit", "atomic_noexcept", "auto", "bitand", 
 					"bitor", "bool", "break", "case", "catch", "char", "char16_t", "char32_t", "class", "compl", 
 					"concept", "const", "constexpr", "const_cast", "continue", "decltype", "default", "delete", "do", "double", 
@@ -77,8 +79,8 @@ namespace daw {
 					type_info_t * value;
 
 					std::string name( ) const noexcept;
-					std::unordered_map<std::string, ti_value> const & children( ) const;
-					std::unordered_map<std::string, ti_value> & children( );
+					std::map<std::string, ti_value> const & children( ) const;
+					std::map<std::string, ti_value> & children( );
 					bool & is_optional( ) noexcept;
 					bool const & is_optional( ) const noexcept;
 					daw::json::impl::value_t::value_types type( ) const;	
@@ -124,7 +126,7 @@ namespace daw {
 
 				struct type_info_t {
 					bool is_optional;
-					std::unordered_map<std::string, ti_value> children;
+					std::map<std::string, ti_value> children;
 
 					type_info_t( ): is_optional{ false }, children{ } { }
 					type_info_t( type_info_t const & ) = default;
@@ -148,11 +150,11 @@ namespace daw {
 				daw::json::impl::value_t::value_types ti_value::type( ) const {
 					return value->type( );
 				}
-				std::unordered_map<std::string, ti_value> const & ti_value::children( ) const {
+				std::map<std::string, ti_value> const & ti_value::children( ) const {
 					return value->children;
 				}
 
-				std::unordered_map<std::string, ti_value> & ti_value::children( ) {
+				std::map<std::string, ti_value> & ti_value::children( ) {
 					return value->children;
 				}
 
@@ -296,16 +298,13 @@ namespace daw {
 					obj_info.push_back( obj );
 					return;
 				}
-				using child_t = std::vector<std::pair<std::string, types::ti_value>>;
-				child_t lhs, rhs;
+
 				types::ti_object & orig = *pos;
-				std::copy( orig.children.begin( ), orig.children.end( ), std::back_inserter( lhs ) );
-				std::copy( obj.children.begin( ), obj.children.end( ), std::back_inserter( rhs ) );
+				std::vector<std::pair<std::string, types::ti_value>> diff;
+
 				static auto const comp = []( auto const & c1, auto const & c2 ) { return c1.first < c2.first; };
-				std::sort( lhs.begin( ), lhs.end( ), comp );
-				std::sort( rhs.begin( ), rhs.end( ), comp );
-				child_t diff;
-				std::set_difference( lhs.begin( ), lhs.end( ), rhs.begin( ), rhs.end( ), std::back_inserter( diff ), comp );
+				std::set_difference( orig.children.begin( ), orig.children.end( ), obj.children.begin( ), obj.children.end( ), std::back_inserter( diff ), comp );
+
 				for( auto & child: diff ) {
 					child.second.is_optional( ) = true;
 					orig.children[child.first] = child.second;

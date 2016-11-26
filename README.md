@@ -1,6 +1,13 @@
 # JSON to C++
 This program will take either a json file or a URL to a web service and build C++ classes to work with that data.  By default it will create the serialization linkage for the JsonLink library that is part of https://github.com/beached/parse_json .
 
+* boost::optional is used for optional members(those that are not always there or are null in some cases
+* std::string is used for strings
+* int64_t is used for integral types
+* double is used for real types
+* bool is used for boolean types
+* classes are given the name of their member suffixed with a "_t"
+
 # Requirements
 * CMake >= 2.8.12 https://cmake.org/
 * Boost >= 1.58 https://www.boost.org/
@@ -73,13 +80,13 @@ private:
 };	// GlossDef_t
 
 struct GlossEntry_t: public daw::json::JsonLink<GlossEntry_t> {
-	std::string GlossSee;
-	GlossDef_t GlossDef;
 	std::string Abbrev;
+	std::string Acronym;
+	GlossDef_t GlossDef;
+	std::string GlossSee;
+	std::string GlossTerm;
 	std::string ID;
 	std::string SortAs;
-	std::string GlossTerm;
-	std::string Acronym;
 
 	GlossEntry_t( );
 	GlossEntry_t( GlossEntry_t const & other );
@@ -183,39 +190,39 @@ void GlossDef_t::set_links( ) {
 
 GlossEntry_t::GlossEntry_t( ):
 		daw::json::JsonLink<GlossEntry_t>{ },
-		GlossSee{ },
-		GlossDef{ },
 		Abbrev{ },
-		ID{ },
-		SortAs{ },
+		Acronym{ },
+		GlossDef{ },
+		GlossSee{ },
 		GlossTerm{ },
-		Acronym{ } {
+		ID{ },
+		SortAs{ } {
 
 	set_links( );
 }
 
 GlossEntry_t::GlossEntry_t( GlossEntry_t const & other ):
 		daw::json::JsonLink<GlossEntry_t>{ },
-		GlossSee{ other.GlossSee },
-		GlossDef{ other.GlossDef },
 		Abbrev{ other.Abbrev },
-		ID{ other.ID },
-		SortAs{ other.SortAs },
+		Acronym{ other.Acronym },
+		GlossDef{ other.GlossDef },
+		GlossSee{ other.GlossSee },
 		GlossTerm{ other.GlossTerm },
-		Acronym{ other.Acronym } {
+		ID{ other.ID },
+		SortAs{ other.SortAs } {
 
 	set_links( );
 }
 
 GlossEntry_t::GlossEntry_t( GlossEntry_t && other ):
 		daw::json::JsonLink<GlossEntry_t>{ },
-		GlossSee{ std::move( other.GlossSee ) },
-		GlossDef{ std::move( other.GlossDef ) },
 		Abbrev{ std::move( other.Abbrev ) },
-		ID{ std::move( other.ID ) },
-		SortAs{ std::move( other.SortAs ) },
+		Acronym{ std::move( other.Acronym ) },
+		GlossDef{ std::move( other.GlossDef ) },
+		GlossSee{ std::move( other.GlossSee ) },
 		GlossTerm{ std::move( other.GlossTerm ) },
-		Acronym{ std::move( other.Acronym ) } {
+		ID{ std::move( other.ID ) },
+		SortAs{ std::move( other.SortAs ) } {
 
 	set_links( );
 }
@@ -223,13 +230,13 @@ GlossEntry_t::GlossEntry_t( GlossEntry_t && other ):
 GlossEntry_t::~GlossEntry_t( ) { }
 
 void GlossEntry_t::set_links( ) {
-	link_string( "GlossSee", GlossSee );
-	link_object( "GlossDef", GlossDef );
 	link_string( "Abbrev", Abbrev );
+	link_string( "Acronym", Acronym );
+	link_object( "GlossDef", GlossDef );
+	link_string( "GlossSee", GlossSee );
+	link_string( "GlossTerm", GlossTerm );
 	link_string( "ID", ID );
 	link_string( "SortAs", SortAs );
-	link_string( "GlossTerm", GlossTerm );
-	link_string( "Acronym", Acronym );
 }
 
 GlossList_t::GlossList_t( ):
