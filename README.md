@@ -27,10 +27,16 @@ To output the C++ code to the terminal one just needs to type ```json_to_cpp_bin
 ```
 Command line options
 Options:
-  --help                  print option descriptions
-  --in_file arg           json source file path or url
-  --out_file arg          output c++ file
-  --use_jsonlink arg (=1) Use JsonLink serializaion/deserialization
+  --help                                print option descriptions
+  --in_file arg                         json source file path or url
+  --cpp_file arg                        output c++ file
+  --header_file arg                     output c++ header file.  If not 
+                                        specified uses cpp_file
+  --use_jsonlink arg (=1)               Use JsonLink serializaion/deserializati
+                                        on
+  --user_agent arg (=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.100 Safari/537.36)
+                                        User agent to use when downloading via 
+                                        URL
 ```
 # Example 
 ## H2 JSON Data
