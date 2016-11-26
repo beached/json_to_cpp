@@ -25,7 +25,7 @@ cmake ..
 cmake --build .
 ```
 # Running
-To output the C++ code to the terminal one just needs to type ```json_to_cpp_bin --in_file jsonfile.json```
+To output the C++ code to the terminal one just needs to type ```json_to_cpp_bin --in_file jsonfile.json``` or for a url something like ```json_to_cpp_bin --in_file http://ip.jsontest.com/```
 
 ```  
 Command line options
