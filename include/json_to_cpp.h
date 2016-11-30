@@ -51,7 +51,7 @@ namespace daw {
 
 		};	// config_t
 
-		void generate_cpp( boost::string_view json_string, config_t & config );
+		void json_to_cpp( boost::string_view json_string, config_t & config );
 	}	// namespace json_to_cpp
 }    // namespace daw
 

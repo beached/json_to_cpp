@@ -82,11 +82,20 @@ link_directories( "${CMAKE_BINARY_DIR}/install/lib" )
 link_directories( ${Boost_LIBRARY_DIRS} )
 
 set( HEADER_FILES
+	${HEADER_FOLDER}/cpp_generator.h
+	${HEADER_FOLDER}/daw_json_parser_v2.h
+	${HEADER_FOLDER}/daw_json_parser_v2_state.h
 	${HEADER_FOLDER}/json_to_cpp.h
+	${HEADER_FOLDER}/object_state.h
+	${HEADER_FOLDER}/ti_value.h
 )
 
 set( SOURCE_FILES
+	${SOURCE_FOLDER}/cpp_generator.cpp
+	${SOURCE_FOLDER}/daw_json_parser_v2.cpp
+	${SOURCE_FOLDER}/daw_json_parser_v2_state.cpp
 	${SOURCE_FOLDER}/json_to_cpp.cpp
+	${SOURCE_FOLDER}/main.cpp
 )
 
 add_library( json_to_cpp ${HEADER_FILES} ${SOURCE_FILES} )
@@ -100,3 +109,4 @@ target_link_libraries( json_to_cpp_bin json_to_cpp parse_json char_range temp_fi
 install( TARGETS json_to_cpp DESTINATION lib )
 install( TARGETS json_to_cpp_bin DESTINATION bin )
 install( DIRECTORY ${HEADER_FOLDER}/ DESTINATION include/daw/json_to_cpp )
+

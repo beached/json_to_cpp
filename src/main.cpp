@@ -107,7 +107,7 @@ int main( int argc, char ** argv ) {
 
 	if( vm.count( "cpp_file" ) > 0 ) {
 		bool const allow_overwrite = vm["allow_overwrite"].as<bool>( );
-		config.cpp_path = canonical( vm["cpp_file"].as<boost::filesystem::path>( ) );
+		config.cpp_path = vm["cpp_file"].as<boost::filesystem::path>( );
 		if( exists( config.cpp_path ) && !allow_overwrite ) {
 			std::cerr << "cpp_file '" << config.cpp_path << "' already exists\n";
 			exit( EXIT_FAILURE );
@@ -120,7 +120,7 @@ int main( int argc, char ** argv ) {
 		config.cpp_stream = &cpp_file;
 
 		if( config.enable_jsonlink && vm.count( "header_file" ) > 0 ) {
-			config.header_path = canonical( vm["header_file"].as<boost::filesystem::path>( ) );
+			config.header_path = vm["header_file"].as<boost::filesystem::path>( );
 			if( exists( config.header_path ) && !allow_overwrite ) {
 				std::cerr << "header_file '" << config.header_path << "' already exists\n";
 				exit( EXIT_FAILURE );
@@ -137,7 +137,7 @@ int main( int argc, char ** argv ) {
 			config.separate_files = false;
 		}
 	}
-	generate_cpp( json_str, config );
+	json_to_cpp( json_str, config );
 
 	return EXIT_SUCCESS;
 }
