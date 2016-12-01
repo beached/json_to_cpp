@@ -26,7 +26,8 @@
 #include <boost/filesystem/path.hpp>
 #include <ostream>
 
-#include <daw/json/daw_json_link.h>
+#include "daw_json_parser_v2.h"
+#include "daw_json_parser_v2_state.h"
 
 namespace daw {
 	namespace json_to_cpp {
@@ -52,6 +53,12 @@ namespace daw {
 		};	// config_t
 
 		void json_to_cpp( boost::string_view json_string, config_t & config );
+
+		template<typename InputIterator>
+		void json_to_cpp_v2( InputIterator first, InputIterator last, config_t & config ) {
+
+			daw::json::json_parser( first, last, state_obj );	
+		}
 	}	// namespace json_to_cpp
 }    // namespace daw
 

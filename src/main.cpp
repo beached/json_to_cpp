@@ -33,6 +33,7 @@
 #include <iostream>
 
 #include "json_to_cpp.h"
+
 namespace {
 	boost::optional<std::string> download( boost::string_view url, boost::string_view user_agent );
 	bool is_url( boost::string_view path );

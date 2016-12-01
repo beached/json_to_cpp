@@ -96,6 +96,7 @@ set( SOURCE_FILES
 	${SOURCE_FOLDER}/daw_json_parser_v2_state.cpp
 	${SOURCE_FOLDER}/json_to_cpp.cpp
 	${SOURCE_FOLDER}/main.cpp
+	${SOURCE_FOLDER}/ti_value.cpp
 )
 
 add_library( json_to_cpp ${HEADER_FILES} ${SOURCE_FILES} )
