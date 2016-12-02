@@ -85,7 +85,7 @@ namespace daw {
 			};	// state_in_object_name
 
 			template<typename CBOnString, typename CBOnObjEnd>
-			state_in_object_name_t::~state_in_object_name_t( ) { }
+			state_in_object_name_t<CBOnString, CBOnObjEnd>::~state_in_object_name_t( ) { }
 
 			template<typename CBOnString, typename CBOnObjEnd>
 			auto make_state_in_object_name_t( CBOnString cb_on_string, CBOnObjEnd cb_on_object_end ) {
@@ -159,7 +159,7 @@ namespace daw {
 			};	// state_in_object_value_t
 
 			template<typename CBOnObjBegin, typename CBOnAryBegin, typename CBOnNull, typename CBOnIntegral, typename CBOnReal, typename CBOnString, typename CBOnBoolean>
-			state_in_object_value::~state_in_object_value_t( ) { }
+			state_in_object_value_t<CBOnObjBegin, CBOnAryBegin, CBOnNull, CBOnIntegral, CBOnReal, CBOnString, CBOnBoolean>::~state_in_object_value_t( ) { }
 
 			template<typename CBOnObjBegin, typename CBOnAryBegin, typename CBOnNull, typename CBOnIntegral, typename CBOnReal, typename CBOnString, typename CBOnBoolean>
 			auto make_state_in_object_value_t( CBOnObjBegin cb_on_object_begin, CBOnAryBegin cb_on_array_begin, CBOnNull cb_on_null, CBOnIntegral cb_on_integral, CBOnReal cb_on_real, CBOnString cb_on_string, CBOnBoolean cb_on_boolean ) {
@@ -176,7 +176,7 @@ namespace daw {
 									std::move( cb_on_integral ),
 									std::move( cb_on_real ),
 									std::move( cb_on_string ),
-									std::move( cb_on_boolean };
+									std::move( cb_on_boolean ) };
 			}
 
 			template<typename CBOnObjBegin, typename CBOnAryBegin, typename CBOnAryEnd, typename CBOnNull, typename CBOnIntegral, typename CBOnReal, typename CBOnString, typename CBOnBoolean>
@@ -254,7 +254,7 @@ namespace daw {
 			};	// state_in_array_t
 
 			template<typename CBOnObjBegin, typename CBOnAryBegin, typename CBOnAryEnd, typename CBOnNull, typename CBOnIntegral, typename CBOnReal, typename CBOnString, typename CBOnBoolean>
-			state_in_array_t::~state_in_array_t( ) { }
+			state_in_array_t<CBOnObjBegin, CBOnAryBegin, CBOnAryEnd, CBOnNull, CBOnIntegral, CBOnReal, CBOnString, CBOnBoolean>::~state_in_array_t( ) { }
 
 			template<typename CBOnObjBegin, typename CBOnAryBegin, typename CBOnAryEnd, typename CBOnNull, typename CBOnIntegral, typename CBOnReal, typename CBOnString, typename CBOnBoolean>
 			auto make_state_in_array_t( CBOnObjBegin cb_on_object_begin, CBOnAryBegin cb_on_array_begin, CBOnAryEnd cb_on_array_end, CBOnNull cb_on_null, CBOnIntegral cb_on_integral, CBOnReal cb_on_real, CBOnString cb_on_string, CBOnBoolean cb_on_boolean ) {
@@ -273,7 +273,7 @@ namespace daw {
 									std::move( cb_on_integral ),
 									std::move( cb_on_real ),
 									std::move( cb_on_string ),
-									std::move( cb_on_boolean };
+									std::move( cb_on_boolean ) };
 			}
 
 			template<typename CBOnObjBegin, typename CBOnAryBegin>
@@ -283,12 +283,12 @@ namespace daw {
 
 				state_none_t( ):
 						state_t{ },
-						m_cb_on_object_begin{ }
+						m_cb_on_object_begin{ },
 						m_cb_on_array_begin{ } { }
 
 				state_none_t( CBOnObjBegin cb_on_object_begin, CBOnAryBegin cb_on_array_begin ):
 						state_t{ },
-						m_cb_on_object_begin{ std::move( cb_on_object_begin ) }
+						m_cb_on_object_begin{ std::move( cb_on_object_begin ) },
 						m_cb_on_array_begin{ std::move( cb_on_array_begin ) } { }
 
 				state_none_t( state_none_t const & ) = default;
@@ -303,10 +303,10 @@ namespace daw {
 			};	// state_none_t
 
 			template<typename CBOnObjBegin, typename CBOnAryBegin>
-			state_none_t::~state_none_t( ) { }
+			state_none_t<CBOnObjBegin, CBOnAryBegin>::~state_none_t( ) { }
 
 			template<typename CBOnObjBegin, typename CBOnAryBegin>
-			auto make_state_none_t( CBOnObjBegin cb_on_object_begin, CB_on_array_begin ) {
+			auto make_state_none_t( CBOnObjBegin cb_on_object_begin, CBOnAryBegin cb_on_array_begin ) {
 				return state_none_t<CBOnObjBegin, CBOnAryBegin>{ std::move( cb_on_object_begin ), std::move( cb_on_array_begin ) };
 			}
 		}	// namspace state
