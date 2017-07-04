@@ -29,6 +29,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
+#include <typeindex>
 
 #include <daw/json/daw_json_link.h>
 
@@ -90,7 +91,8 @@ namespace daw {
 					std::map<std::string, ti_value> & children( );
 					bool & is_optional( ) noexcept;
 					bool const & is_optional( ) const noexcept;
-					daw::json::impl::value_t::value_types type( ) const;	
+
+					std::type_index type( ) const;
 
 					ti_value( ): value{ nullptr } { }
 					~ti_value( );
@@ -142,7 +144,7 @@ namespace daw {
 					type_info_t & operator=( type_info_t && ) = default;
 					virtual ~type_info_t( );
 
-					virtual daw::json::impl::value_t::value_types type( ) const = 0;
+					virtual std::type_index type( ) const = 0;
 					virtual std::string name( ) const = 0;
 
 					virtual type_info_t * clone( ) const = 0;
@@ -154,7 +156,7 @@ namespace daw {
 					return value->name( );
 				}
 
-				daw::json::impl::value_t::value_types ti_value::type( ) const {
+				std::type_index ti_value::type( ) const {
 					return value->type( );
 				}
 				std::map<std::string, ti_value> const & ti_value::children( ) const {
@@ -174,8 +176,8 @@ namespace daw {
 				}
 
 				struct ti_null: public type_info_t {
-					daw::json::impl::value_t::value_types type( ) const override {
-						return daw::json::impl::value_t::value_types::null;
+					std::type_index type( ) const override {
+						return std::type_index( typeid( daw::json::json_value_t::null_t ) );
 					}
 
 					std::string name( ) const override {
@@ -202,8 +204,8 @@ namespace daw {
 				}
 
 				struct ti_integral: public type_info_t {
-					daw::json::impl::value_t::value_types type( ) const override {
-						return daw::json::impl::value_t::value_types::integral;
+					std::type_index type( ) const override {
+						return std::type_index( typeid( daw::json::json_value_t::integer_t ) );
 					}
 
 					std::string name( ) const override {
@@ -216,8 +218,8 @@ namespace daw {
 				};
 
 				struct ti_real: public type_info_t {
-					daw::json::impl::value_t::value_types type( ) const override {
-						return daw::json::impl::value_t::value_types::real;
+					std::type_index type( ) const override {
+						return std::type_index( typeid( daw::json::json_value_t::real_t ) );
 					}
 
 					std::string name( ) const override {
@@ -230,8 +232,8 @@ namespace daw {
 				};
 
 				struct ti_boolean: public type_info_t {
-					daw::json::impl::value_t::value_types type( ) const override {
-						return daw::json::impl::value_t::value_types::boolean;
+					std::type_index type( ) const override {
+						return std::type_index( typeid( daw::json::json_value_t::boolean_t ) );
 					}
 
 					std::string name( ) const override {
@@ -244,8 +246,8 @@ namespace daw {
 				};
 
 				struct ti_string: public type_info_t {
-					daw::json::impl::value_t::value_types type( ) const override {
-						return daw::json::impl::value_t::value_types::string;
+					std::type_index type( ) const override {
+						return std::type_index( typeid( daw::json::json_value_t::string_t ) );
 					}
 
 					std::string name( ) const override {
@@ -260,8 +262,8 @@ namespace daw {
 				struct ti_object: public type_info_t {
 					std::string object_name;
 
-					daw::json::impl::value_t::value_types type( ) const override {
-						return daw::json::impl::value_t::value_types::object;
+					std::type_index type( ) const override {
+						return std::type_index( typeid( daw::json::json_value_t::object_t ) );
 					}
 
 					std::string name( ) const override {
@@ -277,8 +279,8 @@ namespace daw {
 				};
 
 				struct ti_array: public type_info_t { 
-					daw::json::impl::value_t::value_types type( ) const override {
-						return daw::json::impl::value_t::value_types::array;
+					std::type_index type( ) const override {
+						return std::type_index( typeid( daw::json::json_value_t::array_t ) );
 					}
 
 					std::string name( ) const override {
@@ -319,43 +321,48 @@ namespace daw {
 			}
 
 			types::ti_value merge_array_values( types::ti_value const & a, types::ti_value const & b) {
-				using daw::json::impl::value_t;
+				using daw::json::json_value_t;
 				types::ti_value result = b;
-				if( a.type( ) == value_t::value_types::null ) {
+				static auto const null_type = std::type_index( typeid( daw::json::json_value_t::null_t ) );
+				if( null_type == a.type( ) ) { 
 					result = b;
 					result.is_optional( ) = true;
-				} else if( b.type( ) == value_t::value_types::null ) {
+				} else if( null_type == b.type( ) ) {
 					result.is_optional( ) = true;
 				} 
 				return result;
 			}
 
-			types::ti_value parse_json_object( daw::json::impl::value_t const & current_item, boost::string_view cur_name, std::vector<types::ti_object> & obj_info,  state_t & obj_state ) {
-				using daw::json::impl::value_t;
-				switch( current_item.type( ) ) {
-					case value_t::value_types::integral:
-						obj_state.has_integrals = true;
-						return types::create_ti_value<types::ti_integral>( );
-					case value_t::value_types::real:
-						return types::create_ti_value<types::ti_real>( );
-					case value_t::value_types::boolean:
-						return types::create_ti_value<types::ti_boolean>( );
-					case value_t::value_types::string:
-						obj_state.has_strings = true;
-						return types::create_ti_value<types::ti_string>( );
-					case value_t::value_types::null:
-						obj_state.has_optionals = true;
-						return types::create_ti_value<types::ti_null>( );
-					case value_t::value_types::object: {
-					   auto result = types::ti_object{ cur_name.to_string( ) + "_t" };
-					   for( auto const & child: current_item.get_object( ) ) {
-						   std::string const child_name = replace_keywords( child.first.to_string( ) );
-						   result.children[child_name] = parse_json_object( child.second, child_name, obj_info, obj_state );
-					   }
-					   add_or_merge( obj_info, result );
-					   return result;
-				   }	
-					case value_t::value_types::array: {
+			types::ti_value parse_json_object( daw::json::json_value_t const & current_item, boost::string_view cur_name, std::vector<types::ti_object> & obj_info,  state_t & obj_state ) {
+				using daw::json::json_value_t;
+				if( current_item.is_integer( ) ) {
+					obj_state.has_integrals = true;
+					return types::create_ti_value<types::ti_integral>( );
+				}
+				if( current_item.is_real( ) ) {
+					return types::create_ti_value<types::ti_real>( );
+				}
+				if( current_item.is_boolean( ) ) {
+					return types::create_ti_value<types::ti_boolean>( );
+				}
+				if( current_item.is_string( ) ) {
+					obj_state.has_strings = true;
+					return types::create_ti_value<types::ti_string>( );
+				}
+				if( current_item.is_null( ) ) {
+					obj_state.has_optionals = true;
+					return types::create_ti_value<types::ti_null>( );
+				}
+				if( current_item.is_object( ) ) {
+				   auto result = types::ti_object{ cur_name.to_string( ) + "_t" };
+				   for( auto const & child: current_item.get_object( ) ) {
+					   std::string const child_name = replace_keywords( child.first.to_string( ) );
+					   result.children[child_name] = parse_json_object( child.second, child_name, obj_info, obj_state );
+				   }
+				   add_or_merge( obj_info, result );
+				   return result;
+				}
+				if( current_item.is_array( ) ) {
 					  obj_state.has_arrays = true;
 					  auto result = types::create_ti_value<types::ti_array>( );
 					  auto arry = current_item.get_array( );
@@ -372,20 +379,20 @@ namespace daw {
 						  result.children( )[child_name] = child;
 					  }
 					  return result;
-				  }
-}
+
+				}
 				throw std::runtime_error( "Unexpected exit point to parse_json_object2" );
 			}
 
-			std::vector<types::ti_object> parse_json_object( daw::json::impl::value_t const & current_item, state_t & obj_state ) {
-				using namespace daw::json::impl;
+			std::vector<types::ti_object> parse_json_object( daw::json::json_value_t const & current_item, state_t & obj_state ) {
+				using namespace daw::json;
 				std::vector<types::ti_object> result;
 
 				if( !current_item.is_object( ) ) {
-					auto root_obj_member = daw::json::impl::make_object_value_item( "root_obj", current_item );
-					object_value root_object;
+					auto root_obj_member = daw::json::make_object_value_item( "root_obj", current_item );
+					json_object_value root_object;
 					root_object.members_v.push_back( std::move( root_obj_member ) );
-					value_t root_value{ std::move( root_object ) };
+					json_value_t root_value{ std::move( root_object ) };
 					parse_json_object( root_value, "root_object", result, obj_state );
 				} else {
 					parse_json_object( current_item, "root_object", result, obj_state );
@@ -393,98 +400,21 @@ namespace daw {
 				return result;
 			}
 
-			void generate_default_constructor( bool definition, config_t & config, types::ti_object const & cur_obj ) {
+			void generate_json_link_maps( bool definition, config_t & config, types::ti_object const & cur_obj ) {
 				if( !config.enable_jsonlink ) {
 					return;
 				}
 				if( definition ) {
-					config.cpp_file( ) << cur_obj.object_name << "::" << cur_obj.object_name << "( ):\n";
-					config.cpp_file( ) << "\t\tdaw::json::JsonLink<" << cur_obj.object_name << ">{ }";
+					config.cpp_file( ) << "void " << cur_obj.object_name << "::json_link_map( ) {\n";
 					for( auto const & child: cur_obj.children ) {
-						config.cpp_file( ) << ",\n\t\t" << child.first << "{ }";
-					}
-					config.cpp_file( ) << " {\n\n\tset_links( );\n}\n\n";
-				} else {
-					config.header_file( ) << "\t" << cur_obj.object_name << "( );\n";
-				}
-			}
-
-			void generate_copy_constructor( bool definition, config_t & config, types::ti_object const & cur_obj ) {
-				if( !config.enable_jsonlink ) {
-					return;
-				}
-				if( definition ) {
-					config.cpp_file( ) << cur_obj.object_name << "::" << cur_obj.object_name << "( " << cur_obj.object_name << " const & other ):\n";
-					config.cpp_file( ) << "\t\tdaw::json::JsonLink<" << cur_obj.object_name << ">{ }";
-					for( auto const & child: cur_obj.children ) {
-						config.cpp_file( ) << ",\n\t\t" << child.first << "{ other." << child.first << " }";
-					}
-					config.cpp_file( ) << " {\n\n\tset_links( );\n}\n\n";
-				} else {
-					config.header_file( ) << "\t" << cur_obj.object_name << "( " << cur_obj.object_name << " const & other );\n";
-				}
-			}
-
-			void generate_move_constructor( bool definition, config_t & config, types::ti_object const & cur_obj ) {
-				if( !config.enable_jsonlink ) {
-					return;
-				}
-				if( definition ) {
-					config.cpp_file( ) << cur_obj.object_name << "::" << cur_obj.object_name << "( " << cur_obj.object_name << " && other ):\n";
-					config.cpp_file( ) << "\t\tdaw::json::JsonLink<" << cur_obj.object_name << ">{ }";
-					for( auto const & child: cur_obj.children ) {
-						config.cpp_file( ) << ",\n\t\t" << child.first << "{ std::move( other." << child.first << " ) }";
-					}
-					config.cpp_file( ) << " {\n\n\tset_links( );\n}\n\n";
-				} else {
-					config.header_file( ) << "\t" << cur_obj.object_name << "( " << cur_obj.object_name << " && other );\n";
-				}
-			}
-
-			void generate_destructor( bool definition, config_t & config, types::ti_object const & cur_obj ) {
-				if( !config.enable_jsonlink ) {
-					return;
-				}
-				if( definition ) {
-					config.cpp_file( ) << cur_obj.object_name << "::~" << cur_obj.object_name << "( ) { }\n\n";
-				} else {
-					config.header_file( ) << "\t~" << cur_obj.object_name << "( );\n";
-				}
-			}
-
-			void generate_set_links( bool definition, config_t & config, types::ti_object const & cur_obj ) {
-				if( !config.enable_jsonlink ) {
-					return;
-				}
-				if( definition ) {
-					config.cpp_file( ) << "void " << cur_obj.object_name << "::set_links( ) {\n";
-					for( auto const & child: cur_obj.children ) {
-						config.cpp_file( ) << "\tlink_" << to_string( child.second.type( ) );
+						config.cpp_file( ) << "\tlink_" << daw::json::to_string( child.second.type( ) );
 						config.cpp_file( ) << "( \"" << child.first << "\", " << child.first << " );\n";
 					}
 					config.cpp_file( ) << "}\n\n";
 				} else {
-					config.header_file( ) << "private:\n";
-					config.header_file( ) << "\tvoid set_links( );\n";
+					config.header_file( ) << "\tstatic void json_link_map( );\n";
 				}
 			}
-
-			void generate_jsonlink( bool definition, config_t & config, types::ti_object const & cur_obj ) {
-				if( !config.enable_jsonlink ) {
-					return;
-				}
-				generate_default_constructor( definition, config, cur_obj );
-				generate_copy_constructor( definition, config, cur_obj );
-				generate_move_constructor( definition, config, cur_obj );
-				generate_destructor( definition, config, cur_obj );
-				if( !definition ) {
-					auto const obj_type = cur_obj.name( );
-					config.header_file( ) << "\n\t" << obj_type << " & operator=( " << obj_type << " const & ) = default;\n";
-					config.header_file( ) << "\t" << obj_type << " & operator=( " << obj_type << " && ) = default;\n";
-				}
-				generate_set_links( definition, config, cur_obj );
-			}
-
 
 			void generate_includes( bool definition, config_t & config, state_t const & obj_state ) {
 				{
@@ -535,7 +465,7 @@ namespace daw {
 					}
 					if( config.enable_jsonlink ) {
 						config.header_file( ) << "\n";
-						generate_jsonlink( false, config, cur_obj );
+						generate_json_link_maps( false, config, cur_obj );
 					}
 					config.header_file( ) << "};" << "\t// " << obj_type << "\n\n";
 				}
@@ -546,7 +476,7 @@ namespace daw {
 					return;
 				}
 				for( auto const & cur_obj: obj_info ) {
-					generate_jsonlink( true, config, cur_obj );
+					generate_json_link_maps( true, config, cur_obj );
 				}
 			}
 
