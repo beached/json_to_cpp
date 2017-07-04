@@ -83,17 +83,17 @@ link_directories( ${Boost_LIBRARY_DIRS} )
 
 set( HEADER_FILES
 	${HEADER_FOLDER}/cpp_generator.h
-	${HEADER_FOLDER}/daw_json_parser_v2.h
-	${HEADER_FOLDER}/daw_json_parser_v2_state.h
+	#	${HEADER_FOLDER}/daw_json_parser_v2.h
+	#	${HEADER_FOLDER}/daw_json_parser_v2_state.h
 	${HEADER_FOLDER}/json_to_cpp.h
-	${HEADER_FOLDER}/object_state.h
+	#${HEADER_FOLDER}/object_state.h
 	${HEADER_FOLDER}/ti_value.h
 )
 
 set( SOURCE_FILES
 	${SOURCE_FOLDER}/cpp_generator.cpp
-	${SOURCE_FOLDER}/daw_json_parser_v2.cpp
-	${SOURCE_FOLDER}/daw_json_parser_v2_state.cpp
+	#	${SOURCE_FOLDER}/daw_json_parser_v2.cpp
+	# ${SOURCE_FOLDER}/daw_json_parser_v2_state.cpp
 	${SOURCE_FOLDER}/json_to_cpp.cpp
 	${SOURCE_FOLDER}/main.cpp
 	${SOURCE_FOLDER}/ti_value.cpp
