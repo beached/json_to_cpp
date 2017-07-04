@@ -1,7 +1,6 @@
-
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Darrell Wright
+// Copyright (c) 2016-2017 Darrell Wright
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files( the "Software" ), to deal
@@ -35,44 +34,44 @@
 namespace daw {
 	namespace json {
 		namespace state {
-			state_t::~state_t( ) { }
+			state_t::~state_t( ) {}
 
-			void state_t::on_object_begin( ) { 
-				throw std::runtime_error( this->to_string( ) + ": Unexpected state change: on_object_begin" ); 
+			void state_t::on_object_begin( ) {
+				throw std::runtime_error( this->to_string( ) + ": Unexpected state change: on_object_begin" );
 			}
 
-			void state_t::on_object_end( ) { 
-				throw std::runtime_error( this->to_string( ) + ": Unexpected state change: on_object_end" ); 
+			void state_t::on_object_end( ) {
+				throw std::runtime_error( this->to_string( ) + ": Unexpected state change: on_object_end" );
 			}
 
-			void state_t::on_array_begin( ) { 
+			void state_t::on_array_begin( ) {
 				throw std::runtime_error( this->to_string( ) + ": Unexpected state change: on_array_begin" );
 			}
 
-			void state_t::on_array_end( ) { 
+			void state_t::on_array_end( ) {
 				throw std::runtime_error( this->to_string( ) + ": Unexpected state change: on_array_end" );
 			}
 
-			void state_t::on_string( boost::string_view ) { 
+			void state_t::on_string( boost::string_view ) {
 				throw std::runtime_error( this->to_string( ) + ": Unexpected state change: on_string" );
 			}
 
-			void state_t::on_integral( boost::string_view ) { 
+			void state_t::on_integral( boost::string_view ) {
 				throw std::runtime_error( this->to_string( ) + ": Unexpected state change: on_integral" );
 			}
 
-			void state_t::on_real( boost::string_view ) { 
+			void state_t::on_real( boost::string_view ) {
 				throw std::runtime_error( this->to_string( ) + ": Unexpected state change: on_real" );
 			}
 
-			void state_t::on_boolean( bool ) { 
+			void state_t::on_boolean( bool ) {
 				throw std::runtime_error( this->to_string( ) + ": Unexpected state change: on_boolean" );
 			}
 
-			void state_t::on_null( ) { 
+			void state_t::on_null( ) {
 				throw std::runtime_error( this->to_string( ) + ": Unexpected state change: on_null" );
 			}
-		}	// namespace state
-	}	// namespace json
-}	// namespace daw
+		} // namespace state
+	}     // namespace json
+} // namespace daw
 

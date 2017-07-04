@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Darrell Wright
+// Copyright (c) 2016-2017 Darrell Wright
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files( the "Software" ), to deal
@@ -25,8 +25,8 @@
 namespace daw {
 	namespace json {
 		namespace impl {
-			json_parser_exception::~json_parser_exception( ) { }
-		}	// namespace impl
-	}	// namespace json
-}    // namespace daw
+			json_parser_exception::~json_parser_exception( ) {}
+		} // namespace impl
+	}     // namespace json
+} // namespace daw
 

@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Darrell Wright
+// Copyright (c) 2016-2017 Darrell Wright
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files( the "Software" ), to deal
@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "ti_value.h"
 #include "json_to_cpp.h"
+#include "ti_value.h"
 
 namespace daw {
 	namespace json_to_cpp {
@@ -36,13 +36,14 @@ namespace daw {
 			~object_state_t( );
 			object_state_t( object_state_t const & ) = default;
 			object_state_t( object_state_t && ) = default;
-			object_state_t & operator=( object_state_t const & ) = default;
-			object_state_t & operator=( object_state_t && ) = default;
-		};	// object_state_t
+			object_state_t &operator=( object_state_t const & ) = default;
+			object_state_t &operator=( object_state_t && ) = default;
+		}; // object_state_t
 
 		namespace generate {
-			void generate_code( std::vector<types::ti_object> const & obj_info, config_t & config, object_state_t const & obj_state );
-		}	// namespace generate
-	}	// namespace json_to_cpp
-}    // namespace daw
+			void generate_code( std::vector<types::ti_object> const &obj_info, daw::json_to_cpp::config_t &config,
+			                    object_state_t const &obj_state );
+		} // namespace generate
+	}     // namespace json_to_cpp
+} // namespace daw
 

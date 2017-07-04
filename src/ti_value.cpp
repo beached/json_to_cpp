@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016 Darrell Wright
+// Copyright (c) 2016-2017 Darrell Wright
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files( the "Software" ), to deal
@@ -20,7 +20,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-
 #include <algorithm>
 #include <map>
 #include <string>
@@ -30,30 +29,28 @@
 namespace daw {
 	namespace json_to_cpp {
 		namespace types {
-			ti_value::ti_value( ): value{ nullptr } { }
-			ti_value::ti_value( ti_value && other ): value{ std::exchange( other.value, nullptr ) } { }
+			ti_value::ti_value( ) : value{nullptr} {}
+			ti_value::ti_value( ti_value &&other ) : value{std::exchange( other.value, nullptr )} {}
 
-			ti_value & ti_value::operator=( ti_value const & rhs ) {
+			ti_value &ti_value::operator=( ti_value const &rhs ) {
 				if( this != &rhs ) {
-					ti_value tmp{ rhs };
+					ti_value tmp{rhs};
 					using std::swap;
 					swap( *this, tmp );
 				}
 				return *this;
 			}
 
-			ti_value & ti_value::operator=( ti_value && rhs ) {
+			ti_value &ti_value::operator=( ti_value &&rhs ) {
 				if( this != &rhs ) {
 					value = std::exchange( rhs.value, nullptr );
 				}
 				return *this;
 			}
 
-			type_info_t::type_info_t( ): 
-				is_optional{ false }, 
-				children{ } { }
+			type_info_t::type_info_t( ) : is_optional{false}, children{} {}
 
-			type_info_t::~type_info_t( ) { }
+			type_info_t::~type_info_t( ) {}
 
 			std::string ti_value::name( ) const noexcept {
 				return value->name( );
@@ -62,19 +59,19 @@ namespace daw {
 			daw::json::impl::value_t::value_types ti_value::type( ) const {
 				return value->type( );
 			}
-			std::map<std::string, ti_value> const & ti_value::children( ) const {
+			std::map<std::string, ti_value> const &ti_value::children( ) const {
 				return value->children;
 			}
 
-			std::map<std::string, ti_value> & ti_value::children( ) {
+			std::map<std::string, ti_value> &ti_value::children( ) {
 				return value->children;
 			}
 
-			bool & ti_value::is_optional( ) noexcept {
+			bool &ti_value::is_optional( ) noexcept {
 				return value->is_optional;
 			}
 
-			bool const & ti_value::is_optional( ) const noexcept {
+			bool const &ti_value::is_optional( ) const noexcept {
 				return value->is_optional;
 			}
 
@@ -86,15 +83,15 @@ namespace daw {
 				return "void*";
 			}
 
-			ti_null::ti_null( ): type_info_t{ } {
+			ti_null::ti_null( ) : type_info_t{} {
 				is_optional = true;
 			}
 
-			type_info_t * ti_null::clone( ) const {
+			type_info_t *ti_null::clone( ) const {
 				return new ti_null( *this );
 			}
 
-			ti_value::ti_value( ti_value const & other ): value{ other.value->clone( ) } { }
+			ti_value::ti_value( ti_value const &other ) : value{other.value->clone( )} {}
 
 			ti_value::~ti_value( ) {
 				if( nullptr != value ) {
@@ -112,7 +109,7 @@ namespace daw {
 				return "int64_t";
 			}
 
-			type_info_t * ti_integral::clone( ) const {
+			type_info_t *ti_integral::clone( ) const {
 				return new ti_integral( *this );
 			}
 
@@ -124,7 +121,7 @@ namespace daw {
 				return "double";
 			}
 
-			type_info_t * ti_real::clone( ) const {
+			type_info_t *ti_real::clone( ) const {
 				return new ti_real( *this );
 			}
 
@@ -136,7 +133,7 @@ namespace daw {
 				return "bool";
 			}
 
-			type_info_t * ti_boolean::clone( ) const {
+			type_info_t *ti_boolean::clone( ) const {
 				return new ti_boolean( *this );
 			}
 
@@ -148,7 +145,7 @@ namespace daw {
 				return "std::string";
 			}
 
-			type_info_t * ti_string::clone( ) const {
+			type_info_t *ti_string::clone( ) const {
 				return new ti_string( *this );
 			}
 
@@ -160,11 +157,10 @@ namespace daw {
 				return object_name;
 			}
 
-			ti_object::ti_object( std::string obj_name ):
-				type_info_t{ },
-				object_name{ std::move( obj_name ) } { }
+			ti_object::ti_object( std::string obj_name, type_info_t *Parent )
+			    : type_info_t{}, object_name{std::move( obj_name )}, parent{Parent} {}
 
-			type_info_t * ti_object::clone( ) const {
+			type_info_t *ti_object::clone( ) const {
 				return new ti_object( *this );
 			}
 
@@ -172,15 +168,17 @@ namespace daw {
 				return daw::json::impl::value_t::value_types::array;
 			}
 
+			ti_array::ti_array( type_info_t *Parent ) : type_info_t{}, parent{Parent} {}
+
 			std::string ti_array::name( ) const {
 				return "std::vector<" + children.begin( )->second.name( ) + ">";
 			}
 
-			type_info_t * ti_array::clone( ) const {
+			type_info_t *ti_array::clone( ) const {
 				return new ti_array( *this );
 			}
 
-		}	// namespace types
-	}	// namespace json_to_cpp
-}    // namespace daw
+		} // namespace types
+	}     // namespace json_to_cpp
+} // namespace daw
 
