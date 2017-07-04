@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016-2017 Darrell Wright
+// Copyright (c) 2016 Darrell Wright
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files( the "Software" ), to deal
@@ -22,20 +22,18 @@
 
 #pragma once
 
-#include <boost/filesystem/path.hpp>
 #include <boost/utility/string_view.hpp>
+#include <boost/filesystem/path.hpp>
 #include <ostream>
 
-#include "cpp_generator.h"
-#include "daw_json_parser_v2.h"
-#include "daw_json_parser_v2_state.h"
+#include <daw/json/daw_json_link.h>
 
 namespace daw {
 	namespace json_to_cpp {
 		struct config_t final {
 			bool enable_jsonlink;
-			std::ostream *header_stream;
-			std::ostream *cpp_stream;
+			std::ostream * header_stream;
+			std::ostream * cpp_stream;
 			boost::filesystem::path cpp_path;
 			boost::filesystem::path header_path;
 			boost::filesystem::path json_path;
@@ -45,21 +43,15 @@ namespace daw {
 			~config_t( ) = default;
 			config_t( config_t const & ) = default;
 			config_t( config_t && ) = default;
-			config_t &operator=( config_t const & ) = default;
-			config_t &operator=( config_t && ) = default;
+			config_t & operator=( config_t const & ) = default;
+			config_t & operator=( config_t && ) = default;
 
-			std::ostream &header_file( );
-			std::ostream &cpp_file( );
+			std::ostream & header_file( );
+			std::ostream & cpp_file( );
 
-		}; // config_t
+		};	// config_t
 
-		void json_to_cpp( boost::string_view json_string, config_t &config );
-
-		template<typename InputIterator>
-		void json_to_cpp_v2( InputIterator first, InputIterator last, config_t &config ) {
-			object_state_t state_obj;
-			daw::json::json_parser( first, last, state_obj );
-		}
-	} // namespace json_to_cpp
-} // namespace daw
+		void generate_cpp( boost::string_view json_string, config_t & config );
+	}	// namespace json_to_cpp
+}    // namespace daw
 

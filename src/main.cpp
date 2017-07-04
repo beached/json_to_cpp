@@ -1,6 +1,6 @@
-// The MIT License (MIT)
+// The MIT License ( MIT )
 //
-// Copyright (c) 2016-2017 Darrell Wright
+// Copyright ( c ) 2016 Darrell Wright
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files( the "Software" ), to deal
@@ -28,34 +28,29 @@
 #include <cstdlib>
 #include <curl/curl.h>
 #include <fstream>
-#include <iostream>
-#include <memory>
 #include <string>
+#include <memory>
+#include <iostream>
 
 #include "json_to_cpp.h"
-
 namespace {
 	boost::optional<std::string> download( boost::string_view url, boost::string_view user_agent );
 	bool is_url( boost::string_view path );
-} // namespace
+}
 
-int main( int argc, char **argv ) {
+int main( int argc, char ** argv ) {
 	using namespace daw::json_to_cpp;
-	static std::string const default_user_agent =
-	    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.100 Safari/537.36";
+	static std::string const default_user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.100 Safari/537.36"; 
 
-	boost::program_options::options_description desc{"Options"};
-	desc.add_options( )( "help", "print option descriptions" )(
-	    "in_file", boost::program_options::value<boost::filesystem::path>( ),
-	    "json source file path or url" )( "use_jsonlink", boost::program_options::value<bool>( )->default_value( true ),
-	                                      "Use JsonLink serializaion/deserialization" )(
-	    "cpp_file", boost::program_options::value<boost::filesystem::path>( ), "output c++ file" )(
-	    "header_file", boost::program_options::value<boost::filesystem::path>( ),
-	    "output c++ header file.  If not specified uses cpp_file.  Only valid when use_jsonlink=true" )(
-	    "allow_overwrite", boost::program_options::value<bool>( )->default_value( true ),
-	    "Overwrite existing output files" )(
-	    "user_agent", boost::program_options::value<std::string>( )->default_value( default_user_agent ),
-	    "User agent to use when downloading via URL" );
+	boost::program_options::options_description desc{ "Options" };
+	desc.add_options( )
+		( "help", "print option descriptions" )
+		( "in_file", boost::program_options::value<boost::filesystem::path>( ), "json source file path or url" )
+		( "use_jsonlink", boost::program_options::value<bool>( )->default_value( true ), "Use JsonLink serializaion/deserialization" )
+		( "cpp_file", boost::program_options::value<boost::filesystem::path>( ), "output c++ file" )
+		( "header_file", boost::program_options::value<boost::filesystem::path>( ), "output c++ header file.  If not specified uses cpp_file.  Only valid when use_jsonlink=true" )
+		( "allow_overwrite", boost::program_options::value<bool>( )->default_value( true ), "Overwrite existing output files" )
+		( "user_agent", boost::program_options::value<std::string>( )->default_value( default_user_agent ), "User agent to use when downloading via URL" );
 
 	boost::program_options::variables_map vm;
 	try {
@@ -65,17 +60,17 @@ int main( int argc, char **argv ) {
 			return EXIT_SUCCESS;
 		}
 		boost::program_options::notify( vm );
-	} catch( boost::program_options::error const &po_error ) {
+	} catch( boost::program_options::error const & po_error ) {
 		std::cerr << "ERROR: " << po_error.what( ) << '\n';
 		std::cerr << desc << std::endl;
 		return EXIT_FAILURE;
 	}
-	config_t config{};
+	config_t config{ };
 
 	if( !vm.count( "in_file" ) ) {
 		std::cerr << "Missing in_file parameter\n";
 		exit( EXIT_FAILURE );
-	}
+	} 
 	config.json_path = vm["in_file"].as<boost::filesystem::path>( );
 
 	std::string json_str;
@@ -100,8 +95,7 @@ int main( int argc, char **argv ) {
 			std::cerr << "Could not open json in_file '" << canonical( config.json_path ) << "'\n";
 			exit( EXIT_FAILURE );
 		}
-		std::copy( std::istream_iterator<char>{in_file}, std::istream_iterator<char>{},
-		           std::back_inserter( json_str ) );
+		std::copy( std::istream_iterator<char>{ in_file }, std::istream_iterator<char>{ }, std::back_inserter( json_str ) );
 		in_file.close( );
 	}
 
@@ -113,7 +107,7 @@ int main( int argc, char **argv ) {
 
 	if( vm.count( "cpp_file" ) > 0 ) {
 		bool const allow_overwrite = vm["allow_overwrite"].as<bool>( );
-		config.cpp_path = vm["cpp_file"].as<boost::filesystem::path>( );
+		config.cpp_path = canonical( vm["cpp_file"].as<boost::filesystem::path>( ) );
 		if( exists( config.cpp_path ) && !allow_overwrite ) {
 			std::cerr << "cpp_file '" << config.cpp_path << "' already exists\n";
 			exit( EXIT_FAILURE );
@@ -126,7 +120,7 @@ int main( int argc, char **argv ) {
 		config.cpp_stream = &cpp_file;
 
 		if( config.enable_jsonlink && vm.count( "header_file" ) > 0 ) {
-			config.header_path = vm["header_file"].as<boost::filesystem::path>( );
+			config.header_path = canonical( vm["header_file"].as<boost::filesystem::path>( ) );
 			if( exists( config.header_path ) && !allow_overwrite ) {
 				std::cerr << "header_file '" << config.header_path << "' already exists\n";
 				exit( EXIT_FAILURE );
@@ -143,13 +137,13 @@ int main( int argc, char **argv ) {
 			config.separate_files = false;
 		}
 	}
-	json_to_cpp( json_str, config );
+	generate_cpp( json_str, config );
 
 	return EXIT_SUCCESS;
 }
 
 namespace {
-	size_t callback( char const *in, size_t const size, size_t const num, std::string *const out ) {
+	size_t callback( char const * in, size_t const size, size_t const num, std::string * const out ) {
 		assert( out );
 		size_t totalBytes = size * num;
 		out->append( in, totalBytes );
@@ -158,19 +152,19 @@ namespace {
 
 	boost::optional<std::string> download( boost::string_view url, boost::string_view user_agent ) {
 		struct curl_slist *headers = nullptr;
-		curl_slist_append( headers, "Accept: application/json" );
+		curl_slist_append( headers, "Accept: application/json" );  
 		curl_slist_append( headers, "Content-Type: application/json" );
-		curl_slist_append( headers, "charsets: utf-8" );
+		curl_slist_append( headers, "charsets: utf-8" ); 
 
-		CURL *curl = curl_easy_init( );
+		CURL* curl = curl_easy_init( );
 		if( !curl ) {
 			return boost::none;
 		}
 		curl_easy_setopt( curl, CURLOPT_HTTPHEADER, headers );
-		curl_easy_setopt( curl, CURLOPT_HTTPGET, 1 );
-		curl_easy_setopt( curl, CURLOPT_HTTPHEADER, headers );
+		curl_easy_setopt( curl, CURLOPT_HTTPGET, 1 ); 
+		curl_easy_setopt( curl, CURLOPT_HTTPHEADER, headers); 
 		curl_easy_setopt( curl, CURLOPT_USERAGENT, user_agent.data( ) );
-
+		  
 		// Set remote URL.
 		curl_easy_setopt( curl, CURLOPT_URL, url.data( ) );
 
@@ -208,5 +202,5 @@ namespace {
 	bool is_url( boost::string_view path ) {
 		return boost::starts_with( path.data( ), "http://" ) || boost::starts_with( path.data( ), "https://" );
 	}
-} // namespace
+}	// namespace anonymous
 
