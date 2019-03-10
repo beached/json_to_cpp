@@ -33,6 +33,9 @@
 #include <daw/daw_string_view.h>
 
 #include "json_to_cpp.h"
+#include <daw/json/daw_json_parser_v2.h>
+#include <daw/json/daw_json_parser.h>
+#include <daw/json/daw_json_value_t.h>
 
 namespace daw {
 	namespace json_to_cpp {
@@ -167,7 +170,7 @@ namespace daw {
 					bool &is_optional( ) noexcept;
 					bool const &is_optional( ) const noexcept;
 
-					std::type_index type( ) const;
+					size_t type( ) const;
 
 					ti_value( )
 					  : value{nullptr} {}
@@ -217,12 +220,12 @@ namespace daw {
 
 					type_info_t( ) = default;
 					type_info_t( type_info_t const & ) = default;
-					type_info_t( type_info_t && ) = default;
+					type_info_t( type_info_t && ) noexcept = default;
 					type_info_t &operator=( type_info_t const & ) = default;
-					type_info_t &operator=( type_info_t && ) = default;
+					type_info_t &operator=( type_info_t && ) noexcept = default;
 					virtual ~type_info_t( );
 
-					virtual std::type_index type( ) const = 0;
+					virtual size_t type( ) const = 0;
 					virtual std::string name( ) const = 0;
 
 					virtual type_info_t *clone( ) const = 0;
@@ -234,7 +237,7 @@ namespace daw {
 					return value->name( );
 				}
 
-				std::type_index ti_value::type( ) const {
+				size_t ti_value::type( ) const {
 					return value->type( );
 				}
 				std::map<std::string, ti_value> const &ti_value::children( ) const {
@@ -254,8 +257,9 @@ namespace daw {
 				}
 
 				struct ti_null : public type_info_t {
-					std::type_index type( ) const override {
-						return std::type_index( typeid( daw::json::json_value_t::null_t ) );
+					size_t type( ) const override {
+						return daw::json::json_value_t::index_of<
+						  daw::json::json_value_t::null_t>( );
 					}
 
 					std::string name( ) const override {
@@ -281,9 +285,9 @@ namespace daw {
 				}
 
 				struct ti_integral : public type_info_t {
-					std::type_index type( ) const override {
-						return std::type_index(
-						  typeid( daw::json::json_value_t::integer_t ) );
+					size_t type( ) const override {
+						return daw::json::json_value_t::index_of<
+						  daw::json::json_value_t::integer_t>( );
 					}
 
 					std::string name( ) const override {
@@ -296,8 +300,9 @@ namespace daw {
 				};
 
 				struct ti_real : public type_info_t {
-					std::type_index type( ) const override {
-						return std::type_index( typeid( daw::json::json_value_t::real_t ) );
+					size_t type( ) const override {
+						return daw::json::json_value_t::index_of<
+						  daw::json::json_value_t::real_t>( );
 					}
 
 					std::string name( ) const override {
@@ -310,9 +315,9 @@ namespace daw {
 				};
 
 				struct ti_boolean : public type_info_t {
-					std::type_index type( ) const override {
-						return std::type_index(
-						  typeid( daw::json::json_value_t::boolean_t ) );
+					size_t type( ) const override {
+						return daw::json::json_value_t::index_of<
+						  daw::json::json_value_t::boolean_t>( );
 					}
 
 					std::string name( ) const override {
@@ -325,9 +330,9 @@ namespace daw {
 				};
 
 				struct ti_string : public type_info_t {
-					std::type_index type( ) const override {
-						return std::type_index(
-						  typeid( daw::json::json_value_t::string_t ) );
+					size_t type( ) const override {
+						return daw::json::json_value_t::index_of<
+						  daw::json::json_value_t::string_t>( );
 					}
 
 					std::string name( ) const override {
@@ -342,9 +347,9 @@ namespace daw {
 				struct ti_object : public type_info_t {
 					std::string object_name;
 
-					std::type_index type( ) const override {
-						return std::type_index(
-						  typeid( daw::json::json_value_t::object_t ) );
+					size_t type( ) const override {
+						return daw::json::json_value_t::index_of<
+						  daw::json::json_value_t::object_t>( );
 					}
 
 					std::string name( ) const override {
@@ -360,9 +365,9 @@ namespace daw {
 				};
 
 				struct ti_array : public type_info_t {
-					std::type_index type( ) const override {
-						return std::type_index(
-						  typeid( daw::json::json_value_t::array_t ) );
+					size_t type( ) const override {
+						return daw::json::json_value_t::index_of<
+						  daw::json::json_value_t::array_t>( );
 					}
 
 					std::string name( ) const override {
@@ -416,7 +421,7 @@ namespace daw {
 				using daw::json::json_value_t;
 				types::ti_value result = b;
 				static auto const null_type =
-				  std::type_index( typeid( daw::json::json_value_t::null_t ) );
+				  daw::json::json_value_t::index_of<daw::json::json_value_t::null_t>( );
 				if( null_type == a.type( ) ) {
 					result = b;
 					result.is_optional( ) = true;
@@ -549,7 +554,7 @@ namespace daw {
 						config.header_file( ) << "#pragma once\n\n";
 					}
 					if( obj_state.has_optionals )
-						config.header_file( ) << "#include <boost/optional.hpp>\n";
+						config.header_file( ) << "#include <optional>\n";
 					if( obj_state.has_integrals )
 						config.header_file( ) << "#include <cstdint>\n";
 					if( obj_state.has_strings )
@@ -577,7 +582,7 @@ namespace daw {
 						auto const &member_type = child.second.name( );
 						config.header_file( ) << "\t";
 						if( child.second.is_optional( ) ) {
-							config.header_file( ) << "boost::optional<" << member_type << ">";
+							config.header_file( ) << "std::optional<" << member_type << ">";
 						} else {
 							config.header_file( ) << member_type;
 						}

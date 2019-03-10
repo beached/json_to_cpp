@@ -22,12 +22,12 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <cstdlib>
 #include <curl/curl.h>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <memory>
 #include <string>
 
@@ -36,7 +36,7 @@
 #include "json_to_cpp.h"
 
 namespace {
-	boost::optional<std::string> download( daw::string_view url, boost::string_view user_agent );
+	std::optional<std::string> download( daw::string_view url, daw::string_view user_agent );
 	bool is_url( daw::string_view path );
 } // namespace
 
@@ -156,7 +156,7 @@ namespace {
 		return totalBytes;
 	}
 
-	boost::optional<std::string> download( daw::string_view url, boost::string_view user_agent ) {
+	std::optional<std::string> download( daw::string_view url, daw::string_view user_agent ) {
 		struct curl_slist *headers = nullptr;
 		curl_slist_append( headers, "Accept: application/json" );
 		curl_slist_append( headers, "Content-Type: application/json" );
@@ -164,7 +164,7 @@ namespace {
 
 		CURL *curl = curl_easy_init( );
 		if( !curl ) {
-			return boost::none;
+			return std::nullopt;
 		}
 		curl_easy_setopt( curl, CURLOPT_HTTPHEADER, headers );
 		curl_easy_setopt( curl, CURLOPT_HTTPGET, 1 );
@@ -199,7 +199,7 @@ namespace {
 
 		if( httpCode != 200 ) {
 			std::cerr << "Couldn't GET from " << url << '\n';
-			return boost::none;
+			return std::nullopt;
 		}
 
 		return httpData;
