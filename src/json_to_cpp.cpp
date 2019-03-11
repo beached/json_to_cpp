@@ -174,6 +174,11 @@ namespace daw {
 
 					size_t type( ) const;
 
+					inline bool is_null( ) const {
+						return type( ) ==
+						       json::json_value_t::index_of<json::json_value_t::null_t>( );
+					}
+
 					constexpr ti_value( ) noexcept = default;
 
 					~ti_value( );
@@ -230,6 +235,11 @@ namespace daw {
 					virtual ~type_info_t( );
 
 					virtual size_t type( ) const = 0;
+
+					bool is_null( ) const {
+						return this->type( ) ==
+						       json::json_value_t::index_of<json::json_value_t::null_t>( );
+					}
 					virtual std::string name( ) const = 0;
 					virtual std::string json_name( std::string member_name ) const = 0;
 					virtual type_info_t *clone( ) const = 0;
@@ -249,6 +259,7 @@ namespace daw {
 				size_t ti_value::type( ) const {
 					return value->type( );
 				}
+
 				std::map<std::string, ti_value> const &ti_value::children( ) const {
 					return value->children;
 				}
@@ -413,6 +424,7 @@ namespace daw {
 					case json::json_value_t::index_of<json::json_value_t::object_t>( ):
 						return "json_class<" + name;
 					}
+					std::terminate( );
 				}
 
 				struct ti_array : public type_info_t {
@@ -456,7 +468,7 @@ namespace daw {
 				}
 
 				types::ti_object &orig = *pos;
-				std::vector<std::pair<std::string, types::ti_value>> diff;
+				std::vector<std::pair<std::string, types::ti_value>> diff{};
 
 				static auto const comp = []( auto const &c1, auto const &c2 ) {
 					return c1.first < c2.first;
@@ -466,35 +478,33 @@ namespace daw {
 				                     std::back_inserter( diff ), comp );
 
 				for( auto &child : diff ) {
-					child.second.is_optional( ) = true;
-					if( json::json_value_t::index_of<json::json_value_t::null_t>( ) ==
-					    child.second.type( ) ) {
-						if( json::json_value_t::index_of<json::json_value_t::null_t>( ) ==
-						    orig.children[child.first].type( ) ) {
+					if( child.second.is_null( ) ) {
+						if( !orig.children[child.first].is_null( ) ) {
 							orig.children[child.first] = child.second;
 						}
 						orig.children[child.first].is_optional( ) = true;
-					} else if( json::json_value_t::index_of<
-					             json::json_value_t::null_t>( ) ==
-					           orig.children[child.first].type( ) ) {
-						orig.children[child.first].is_optional( ) = true;
-					} else {
+					} else if( orig.children[child.first].is_null( ) ) {
 						orig.children[child.first] = child.second;
-					}
+					} /* else {
+					   orig.children[child.first] = child.second;
+					 }*/
+					orig.children[child.first].is_optional( ) = true;
 				}
 			}
 
 			types::ti_value merge_array_values( types::ti_value const &a,
 			                                    types::ti_value const &b ) {
 				using daw::json::json_value_t;
-				types::ti_value result = b;
-				static auto const null_type =
-				  daw::json::json_value_t::index_of<daw::json::json_value_t::null_t>( );
-				if( null_type == a.type( ) ) {
+				types::ti_value result{};
+				if( a.is_null( ) ) {
 					result = b;
 					result.is_optional( ) = true;
-				} else if( null_type == b.type( ) ) {
+				} else if( b.is_null( ) ) {
+					result = a;
 					result.is_optional( ) = true;
+				} else {
+					result = a;
+					result.is_optional( ) = a.is_optional( ) or b.is_optional( );
 				}
 				return result;
 			}
@@ -563,7 +573,7 @@ namespace daw {
 			parse_json_object( daw::json::json_value_t const &current_item,
 			                   state_t &obj_state ) {
 				using namespace daw::json;
-				std::vector<types::ti_object> result;
+				std::vector<types::ti_object> result{};
 
 				if( !current_item.is_object( ) ) {
 					auto root_obj_member =
@@ -635,7 +645,15 @@ namespace daw {
 						} else {
 							is_first = false;
 						}
-						config.cpp_file( ) << child.second.json_name( child.first ) << "\n";
+						if( child.second.is_optional( ) ) {
+							config.cpp_file( ) << "json_nullable<";
+						}
+						config.cpp_file( ) << child.second.json_name( child.first );
+						if( child.second.is_optional( ) ) {
+							config.cpp_file( ) << ">\n";
+						} else {
+							config.cpp_file( ) << '\n';
+						}
 					}
 					config.cpp_file( ) << ">{};\n}\n\n";
 
