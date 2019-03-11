@@ -33,8 +33,8 @@
 #include <daw/daw_string_view.h>
 
 #include "json_to_cpp.h"
-#include <daw/json/daw_json_parser_v2.h>
 #include <daw/json/daw_json_parser.h>
+#include <daw/json/daw_json_parser_v2.h>
 #include <daw/json/daw_json_value_t.h>
 
 namespace daw {
@@ -159,12 +159,14 @@ namespace daw {
 			}
 
 			namespace types {
+
 				struct type_info_t;
 
 				struct ti_value {
 					type_info_t *value;
 
 					std::string name( ) const noexcept;
+					std::string json_name( std::string member_name ) const noexcept;
 					std::map<std::string, ti_value> const &children( ) const;
 					std::map<std::string, ti_value> &children( );
 					bool &is_optional( ) noexcept;
@@ -227,7 +229,7 @@ namespace daw {
 
 					virtual size_t type( ) const = 0;
 					virtual std::string name( ) const = 0;
-
+					virtual std::string json_name( std::string member_name ) const = 0;
 					virtual type_info_t *clone( ) const = 0;
 				}; // type_info_t
 
@@ -235,6 +237,11 @@ namespace daw {
 
 				std::string ti_value::name( ) const noexcept {
 					return value->name( );
+				}
+
+				std::string ti_value::json_name( std::string member_name ) const
+				  noexcept {
+					return value->json_name( std::move( member_name ) );
 				}
 
 				size_t ti_value::type( ) const {
@@ -266,6 +273,10 @@ namespace daw {
 						return "void*";
 					}
 
+					std::string json_name( std::string member_name ) const override {
+						return "json_custom<" + member_name + ">";
+					}
+
 					ti_null( )
 					  : type_info_t{} {
 						is_optional = true;
@@ -294,6 +305,10 @@ namespace daw {
 						return "int64_t";
 					}
 
+					std::string json_name( std::string member_name ) const override {
+						return "json_number<" + member_name + ", intmax_t>";
+					}
+
 					type_info_t *clone( ) const override {
 						return new ti_integral( *this );
 					}
@@ -307,6 +322,10 @@ namespace daw {
 
 					std::string name( ) const override {
 						return "double";
+					}
+
+					std::string json_name( std::string member_name ) const override {
+						return "json_number<" + member_name + ">";
 					}
 
 					type_info_t *clone( ) const override {
@@ -324,6 +343,10 @@ namespace daw {
 						return "bool";
 					}
 
+					std::string json_name( std::string member_name ) const override {
+						return "json_bool<" + member_name + ">";
+					}
+
 					type_info_t *clone( ) const override {
 						return new ti_boolean( *this );
 					}
@@ -337,6 +360,10 @@ namespace daw {
 
 					std::string name( ) const override {
 						return "std::string";
+					}
+
+					std::string json_name( std::string member_name ) const override {
+						return "json_string<" + member_name + ">";
 					}
 
 					type_info_t *clone( ) const override {
@@ -362,6 +389,10 @@ namespace daw {
 					type_info_t *clone( ) const override {
 						return new ti_object( *this );
 					}
+
+					std::string json_name( std::string member_name ) const override {
+						return "json_class<" + member_name + ", " + name( ) + ">";
+					}
 				};
 
 				struct ti_array : public type_info_t {
@@ -372,6 +403,10 @@ namespace daw {
 
 					std::string name( ) const override {
 						return "std::vector<" + children.begin( )->second.name( ) + ">";
+					}
+
+					std::string json_name( std::string member_name ) const override {
+						return "json_array<" + member_name + ", " + name( ) + ",>";
 					}
 
 					type_info_t *clone( ) const override {
@@ -510,7 +545,8 @@ namespace daw {
 				return result;
 			}
 
-			void generate_json_link_maps( bool definition, config_t &config,
+			void generate_json_link_maps( std::integral_constant<int, 1>,
+			                              bool definition, config_t &config,
 			                              types::ti_object const &cur_obj ) {
 				if( !config.enable_jsonlink ) {
 					return;
@@ -528,6 +564,48 @@ namespace daw {
 				} else {
 					config.header_file( ) << "\tstatic void json_link_map( );\n";
 				}
+			}
+
+			void generate_json_link_maps( std::integral_constant<int, 3>,
+			                              bool definition, config_t &config,
+			                              types::ti_object const &cur_obj ) {
+				if( !config.enable_jsonlink ) {
+					return;
+				}
+				if( !definition ) {
+					using daw::json::json_value_t;
+					config.cpp_file( )
+					  << "inline auto describe_json_class( " << cur_obj.object_name
+					  << " ) {\nusing namespace daw::json;\n";
+					int count = 0;
+					for( auto const &child : cur_obj.children ) {
+						config.cpp_file( ) << "static constexpr char const name_" << count++
+						                   << "[] = \"" << child.first << "\"\n";
+					}
+
+					config.cpp_file( ) << "\treturn daw::json::class_description_t<\n";
+
+					bool is_first = true;
+
+					count = 0;
+					for( auto const &child : cur_obj.children ) {
+						if( !is_first ) {
+							config.cpp_file( ) << ",";
+						} else {
+							is_first = false;
+						}
+						config.cpp_file( )
+						  << "\t\t" << child.second.json_name( "name_" + count++ ) << ">\n";
+					}
+					config.cpp_file( ) << ">{};\n}\n";
+				}
+			}
+
+			inline void generate_json_link_maps( bool definition, config_t &config,
+			                                     types::ti_object const &cur_obj ) {
+
+				return generate_json_link_maps( std::integral_constant<int, 3>{},
+				                                definition, config, cur_obj );
 			}
 
 			void generate_includes( bool definition, config_t &config,
