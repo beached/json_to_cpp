@@ -612,8 +612,16 @@ namespace daw {
 					  << " ) {\n\tusing namespace daw::json;\n";
 					for( auto const &child : cur_obj.children ) {
 						config.cpp_file( )
-						  << "\tstatic constexpr char const " << child.first
-						  << "[] = \"" << child.first << "\";\n";
+						  << "\tstatic constexpr char const " << child.first << "[] = \"";
+						if( daw::string_view( child.first.data( ), child.first.size( ) )
+						      .starts_with( "_json" ) ) {
+							config.cpp_file( )
+							  << daw::string_view( child.first.data( ), child.first.size( ) )
+							       .substr( 5 )
+							  << "\";\n";
+						} else {
+							config.cpp_file( ) << child.first << "\";\n";
+						}
 					}
 
 					config.cpp_file( ) << "\treturn daw::json::class_description_t<\n";
@@ -627,10 +635,23 @@ namespace daw {
 						} else {
 							is_first = false;
 						}
-						config.cpp_file( )
-						  << child.second.json_name( child.first ) << "\n";
+						config.cpp_file( ) << child.second.json_name( child.first ) << "\n";
 					}
 					config.cpp_file( ) << ">{};\n}\n\n";
+
+					config.cpp_file( ) << "inline auto to_json_data( "
+					                   << cur_obj.object_name << " const & value ) {\n";
+					config.cpp_file( ) << "\treturn std::forward_as_tuple( ";
+					is_first = true;
+					for( auto const &child : cur_obj.children ) {
+						if( !is_first ) {
+							config.cpp_file( ) << ", ";
+						} else {
+							is_first = !is_first;
+						}
+						config.cpp_file( ) << "value." << child.first;
+					}
+					config.cpp_file( ) << " );\n}\n\n";
 				}
 			}
 
@@ -664,6 +685,7 @@ namespace daw {
 					if( config.separate_files ) {
 						config.header_file( ) << "#pragma once\n\n";
 					}
+					config.header_file( ) << "#include <tuple>\n";
 					if( obj_state.has_optionals )
 						config.header_file( ) << "#include <optional>\n";
 					if( obj_state.has_integrals )
