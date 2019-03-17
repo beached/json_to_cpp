@@ -37,7 +37,7 @@ namespace daw {
 			boost::filesystem::path header_path;
 			boost::filesystem::path json_path;
 			bool separate_files;
-
+			bool hide_null_only;
 			std::ostream &header_file( );
 			std::ostream &cpp_file( );
 		}; // config_t

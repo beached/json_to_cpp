@@ -3,14 +3,14 @@
 // Copyright ( c ) 2016 Darrell Wright
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files( the "Software" ), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
-// copies of the Software, and to permit persons to whom the Software is
+// of this software and associated documentation files( the "Software" ), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and / or
+// sell copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -27,8 +27,8 @@
 #include <curl/curl.h>
 #include <fstream>
 #include <iostream>
-#include <optional>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include <daw/daw_string_view.h>
@@ -36,31 +36,45 @@
 #include "json_to_cpp.h"
 
 namespace {
-	std::optional<std::string> download( daw::string_view url, daw::string_view user_agent );
+	std::optional<std::string> download( daw::string_view url,
+	                                     daw::string_view user_agent );
 	bool is_url( daw::string_view path );
 } // namespace
 
 int main( int argc, char **argv ) {
 	using namespace daw::json_to_cpp;
 	static std::string const default_user_agent =
-	  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.100 Safari/537.36";
+	  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
+	  "Chrome/54.0.2840.100 Safari/537.36";
 
 	boost::program_options::options_description desc{"Options"};
 	desc.add_options( )( "help", "print option descriptions" )(
 	  "in_file", boost::program_options::value<boost::filesystem::path>( ),
-	  "json source file path or url" )( "use_jsonlink", boost::program_options::value<bool>( )->default_value( true ),
-	                                    "Use JsonLink serializaion/deserialization" )(
-	  "cpp_file", boost::program_options::value<boost::filesystem::path>( ), "output c++ file" )(
+	  "json source file path or url" )(
+	  "use_jsonlink",
+	  boost::program_options::value<bool>( )->default_value( true ),
+	  "Use JsonLink serializaion/deserialization" )(
+	  "cpp_file", boost::program_options::value<boost::filesystem::path>( ),
+	  "output c++ file" )(
 	  "header_file", boost::program_options::value<boost::filesystem::path>( ),
-	  "output c++ header file.  If not specified uses cpp_file.  Only valid when use_jsonlink=true" )(
-	  "allow_overwrite", boost::program_options::value<bool>( )->default_value( true ),
+	  "output c++ header file.  If not specified uses cpp_file.  Only valid when "
+	  "use_jsonlink=true" )(
+	  "allow_overwrite",
+	  boost::program_options::value<bool>( )->default_value( true ),
+
 	  "Overwrite existing output files" )(
-	  "user_agent", boost::program_options::value<std::string>( )->default_value( default_user_agent ),
+	  "hide_null_only",
+	  boost::program_options::value<bool>( )->default_value( true ),
+	  "Do not output json entries that are only ever null" )(
+	  "user_agent",
+	  boost::program_options::value<std::string>( )->default_value(
+	    default_user_agent ),
 	  "User agent to use when downloading via URL" );
 
 	boost::program_options::variables_map vm;
 	try {
-		boost::program_options::store( boost::program_options::parse_command_line( argc, argv, desc ), vm );
+		boost::program_options::store(
+		  boost::program_options::parse_command_line( argc, argv, desc ), vm );
 		if( vm.count( "help" ) ) {
 			std::cout << "Command line options\n" << desc << std::endl;
 			return EXIT_SUCCESS;
@@ -81,11 +95,13 @@ int main( int argc, char **argv ) {
 
 	std::string json_str;
 	if( is_url( config.json_path.string( ) ) ) {
-		auto tmp = download( config.json_path.string( ), vm["user_agent"].as<std::string>( ) );
+		auto tmp = download( config.json_path.string( ),
+		                     vm["user_agent"].as<std::string>( ) );
 		if( tmp ) {
 			json_str = *tmp;
 		} else {
-			std::cerr << "Could not download json data from '" << canonical( config.json_path ) << "'\n";
+			std::cerr << "Could not download json data from '"
+			          << canonical( config.json_path ) << "'\n";
 			exit( EXIT_FAILURE );
 		}
 	} else {
@@ -98,42 +114,51 @@ int main( int argc, char **argv ) {
 		std::ifstream in_file;
 		in_file.open( config.json_path.string( ) );
 		if( !in_file ) {
-			std::cerr << "Could not open json in_file '" << canonical( config.json_path ) << "'\n";
+			std::cerr << "Could not open json in_file '"
+			          << canonical( config.json_path ) << "'\n";
 			exit( EXIT_FAILURE );
 		}
-		std::copy( std::istream_iterator<char>{in_file}, std::istream_iterator<char>{}, std::back_inserter( json_str ) );
+		std::copy( std::istream_iterator<char>{in_file},
+		           std::istream_iterator<char>{}, std::back_inserter( json_str ) );
 		in_file.close( );
 	}
 
 	config.cpp_stream = &std::cout;
 	config.header_stream = &std::cout;
 	config.enable_jsonlink = vm["use_jsonlink"].as<bool>( );
+	config.hide_null_only = vm["allow_overwrite"].as<bool>( );
 	std::ofstream cpp_file;
 	std::ofstream header_file;
 
 	if( vm.count( "cpp_file" ) > 0 ) {
 		bool const allow_overwrite = vm["allow_overwrite"].as<bool>( );
-		config.cpp_path = canonical( vm["cpp_file"].as<boost::filesystem::path>( ) );
+		config.cpp_path =
+		  canonical( vm["cpp_file"].as<boost::filesystem::path>( ) );
 		if( exists( config.cpp_path ) && !allow_overwrite ) {
 			std::cerr << "cpp_file '" << config.cpp_path << "' already exists\n";
 			exit( EXIT_FAILURE );
 		}
 		cpp_file.open( config.cpp_path.string( ), std::ios::out | std::ios::trunc );
 		if( !cpp_file ) {
-			std::cerr << "Could not open cpp_file '" << config.cpp_path << "' for writing\n";
+			std::cerr << "Could not open cpp_file '" << config.cpp_path
+			          << "' for writing\n";
 			exit( EXIT_FAILURE );
 		}
 		config.cpp_stream = &cpp_file;
 
 		if( config.enable_jsonlink && vm.count( "header_file" ) > 0 ) {
-			config.header_path = canonical( vm["header_file"].as<boost::filesystem::path>( ) );
+			config.header_path =
+			  canonical( vm["header_file"].as<boost::filesystem::path>( ) );
 			if( exists( config.header_path ) && !allow_overwrite ) {
-				std::cerr << "header_file '" << config.header_path << "' already exists\n";
+				std::cerr << "header_file '" << config.header_path
+				          << "' already exists\n";
 				exit( EXIT_FAILURE );
 			}
-			header_file.open( config.header_path.string( ), std::ios::out | std::ios::trunc );
+			header_file.open( config.header_path.string( ),
+			                  std::ios::out | std::ios::trunc );
 			if( !header_file ) {
-				std::cerr << "Could not open header_file '" << config.header_path << "' for writing\n";
+				std::cerr << "Could not open header_file '" << config.header_path
+				          << "' for writing\n";
 				exit( EXIT_FAILURE );
 			}
 			config.header_stream = &header_file;
@@ -149,14 +174,16 @@ int main( int argc, char **argv ) {
 }
 
 namespace {
-	size_t callback( char const *in, size_t const size, size_t const num, std::string *const out ) {
+	size_t callback( char const *in, size_t const size, size_t const num,
+	                 std::string *const out ) {
 		assert( out );
 		size_t totalBytes = size * num;
 		out->append( in, totalBytes );
 		return totalBytes;
 	}
 
-	std::optional<std::string> download( daw::string_view url, daw::string_view user_agent ) {
+	std::optional<std::string> download( daw::string_view url,
+	                                     daw::string_view user_agent ) {
 		struct curl_slist *headers = nullptr;
 		curl_slist_append( headers, "Accept: application/json" );
 		curl_slist_append( headers, "Content-Type: application/json" );
@@ -206,7 +233,7 @@ namespace {
 	}
 
 	bool is_url( daw::string_view path ) {
-		return boost::starts_with( path.data( ), "http://" ) || boost::starts_with( path.data( ), "https://" );
+		return boost::starts_with( path.data( ), "http://" ) ||
+		       boost::starts_with( path.data( ), "https://" );
 	}
 } // namespace
-

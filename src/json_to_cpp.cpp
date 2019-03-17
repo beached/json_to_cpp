@@ -91,6 +91,7 @@ namespace daw {
 
 					std::string name( ) const noexcept;
 					std::string json_name( std::string member_name ) const noexcept;
+					std::string array_member_info( ) const;
 					daw::ordered_map<std::string, ti_value> const &children( ) const;
 					daw::ordered_map<std::string, ti_value> &children( );
 					bool &is_optional( ) noexcept;
@@ -167,6 +168,7 @@ namespace daw {
 					virtual std::string name( ) const = 0;
 					virtual std::string json_name( std::string member_name ) const = 0;
 					virtual type_info_t *clone( ) const = 0;
+					virtual std::string array_member_info( ) const = 0;
 				}; // type_info_t
 
 				type_info_t::~type_info_t( ) {}
@@ -178,6 +180,10 @@ namespace daw {
 				std::string ti_value::json_name( std::string member_name ) const
 				  noexcept {
 					return value->json_name( std::move( member_name ) );
+				}
+
+				std::string ti_value::array_member_info( ) const {
+					return value->array_member_info( );
 				}
 
 				size_t ti_value::type( ) const {
@@ -222,6 +228,10 @@ namespace daw {
 						return "json_custom<" + member_name + ">";
 					}
 
+					virtual std::string array_member_info( ) const override {
+						return "json_custom<no_name>";
+					}
+
 					ti_null( )
 					  : type_info_t{} {
 						is_optional = true;
@@ -240,6 +250,10 @@ namespace daw {
 
 					std::string name( ) const override {
 						return "int64_t";
+					}
+
+					virtual std::string array_member_info( ) const override {
+						return "json_number<no_name, int64_t>";
 					}
 
 					std::string json_name( std::string member_name ) const override {
@@ -261,6 +275,10 @@ namespace daw {
 						return "double";
 					}
 
+					virtual std::string array_member_info( ) const override {
+						return "json_number<no_name>";
+					}
+
 					std::string json_name( std::string member_name ) const override {
 						return "json_number<" + member_name + ">";
 					}
@@ -280,6 +298,10 @@ namespace daw {
 						return "bool";
 					}
 
+					virtual std::string array_member_info( ) const override {
+						return "json_bool<no_name>";
+					}
+
 					std::string json_name( std::string member_name ) const override {
 						return "json_bool<" + member_name + ">";
 					}
@@ -297,6 +319,10 @@ namespace daw {
 
 					std::string name( ) const override {
 						return "std::string";
+					}
+
+					virtual std::string array_member_info( ) const override {
+						return "json_string<no_name>";
 					}
 
 					std::string json_name( std::string member_name ) const override {
@@ -319,6 +345,7 @@ namespace daw {
 					std::string name( ) const override {
 						return object_name;
 					}
+
 					ti_object( std::string obj_name )
 					  : type_info_t{}
 					  , object_name{std::move( obj_name )} {}
@@ -327,30 +354,14 @@ namespace daw {
 						return new ti_object( *this );
 					}
 
+					virtual std::string array_member_info( ) const override {
+						return "json_class<no_name, " + name( ) + ">";
+					}
+
 					std::string json_name( std::string member_name ) const override {
 						return "json_class<" + member_name + ", " + name( ) + ">";
 					}
 				};
-
-				std::string make_json_type( std::string name, size_t id ) {
-					switch( id ) {
-					case json::json_value_t::index_of<json::json_value_t::string_t>( ):
-						return "json_string<" + name;
-					case json::json_value_t::index_of<json::json_value_t::boolean_t>( ):
-						return "json_bool<" + name;
-					case json::json_value_t::index_of<json::json_value_t::integer_t>( ):
-						return "json_number<" + name + ", intmax_t";
-					case json::json_value_t::index_of<json::json_value_t::real_t>( ):
-						return "json_number<" + name;
-					case json::json_value_t::index_of<json::json_value_t::null_t>( ):
-						return "json_custom<" + name;
-					case json::json_value_t::index_of<json::json_value_t::array_t>( ):
-						return "json_array<" + name;
-					case json::json_value_t::index_of<json::json_value_t::object_t>( ):
-						return "json_class<" + name;
-					}
-					std::terminate( );
-				}
 
 				struct ti_array : public type_info_t {
 					size_t type( ) const override {
@@ -363,7 +374,13 @@ namespace daw {
 					}
 
 					std::string json_name( std::string member_name ) const override {
-						return "json_array<" + member_name + ", " + name( ) + "," + +">";
+						return "json_array<" + member_name + ", " + name( ) + ", " +
+						       children.begin( )->second.array_member_info( ) + ">";
+					}
+
+					std::string array_member_info( ) const override {
+						return "json_array<no_name, " + name( ) + ", " +
+						       children.begin( )->second.array_member_info( ) + ">";
 					}
 
 					type_info_t *clone( ) const override {
@@ -517,6 +534,9 @@ namespace daw {
 					config.cpp_file( )
 					  << "void " << cur_obj.object_name << "::json_link_map( ) {\n";
 					for( auto const &child : cur_obj.children ) {
+						if( config.hide_null_only and child.second.is_null( ) ) {
+							continue;
+						}
 						config.cpp_file( )
 						  << "\tlink_" << daw::json::to_string( child.second.type( ) );
 						config.cpp_file( )
@@ -540,6 +560,9 @@ namespace daw {
 					  << "inline auto describe_json_class( " << cur_obj.object_name
 					  << " ) {\n\tusing namespace daw::json;\n";
 					for( auto const &child : cur_obj.children ) {
+						if( config.hide_null_only and child.second.is_null( ) ) {
+							continue;
+						}
 						config.cpp_file( )
 						  << "\tstatic constexpr char const " << child.first << "[] = \"";
 						if( daw::string_view( child.first.data( ), child.first.size( ) )
@@ -558,6 +581,9 @@ namespace daw {
 					bool is_first = true;
 
 					for( auto const &child : cur_obj.children ) {
+						if( config.hide_null_only and child.second.is_null( ) ) {
+							continue;
+						}
 						config.cpp_file( ) << "\t\t";
 						if( !is_first ) {
 							config.cpp_file( ) << ",";
@@ -581,6 +607,9 @@ namespace daw {
 					config.cpp_file( ) << "\treturn std::forward_as_tuple( ";
 					is_first = true;
 					for( auto const &child : cur_obj.children ) {
+						if( config.hide_null_only and child.second.is_null( ) ) {
+							continue;
+						}
 						if( !is_first ) {
 							config.cpp_file( ) << ", ";
 						} else {
@@ -643,6 +672,9 @@ namespace daw {
 					auto const obj_type = cur_obj.name( );
 					config.header_file( ) << "struct " << obj_type << " {\n";
 					for( auto const &child : cur_obj.children ) {
+						if( config.hide_null_only and child.second.is_null( ) ) {
+							continue;
+						}
 						auto const &member_name = child.first;
 						auto const &member_type = child.second.name( );
 						config.header_file( ) << "\t";
