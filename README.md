@@ -1,26 +1,28 @@
 # JSON to C++
-This program will take either a json file or a URL to a web service and build C++ classes to work with that data.  By default it will create the serialization linkage for the JsonLink library that is part of https://github.com/beached/parse_json .
+This program will take either a json file or a URL to a web service and build C++ classes to work with that data.  By default it will create the serialization linkage for the JsonLink library that is part of https://github.com/beached/daw_json_link .
 
-* boost::optional is used for optional members(those that are not always there or are null in some cases
+* std::optional is used for optional members(those that are not always there or are null in some cases
 * std::string is used for strings
 * int64_t is used for integral types
 * double is used for real types
 * bool is used for boolean types
 * classes are given the name of their member suffixed with a "_t"
+* identifier names are filtered such that C++ keywords, empty id's, or all number id's are prefixed with _json
+* Any character in an id that isn't A-Za-z0-9 or _ will be escaped via 0xXXX
 
 # Requirements
 * CMake >= 2.8.12 https://cmake.org/
 * Boost >= 1.58 https://www.boost.org/
 * Curl https://curl.haxx.se/
 
-# Testing
-Currently it is known to build on clang 3.8.1 and gcc 6.2.0
-
 Both Boost and Curl are often packaged within a Linux distribution and available for Windows/Mac
 
 # Building
-The build system uses cmake.  Often a build can be accomplished by creating a build folder in the project source folder and typing 
+The build system uses cmake.  Often a build can be accomplished by creating a build folder in the project source folder and typing  
+
 ```
+mkdir build
+cd build
 cmake ..
 cmake --build .
 ```
@@ -69,300 +71,133 @@ Options:
     }   
 }
 ```
-## Generated C++ Code
+## Generated C++ Code by calling ```json_to_cpp --in_file name.json```
 ```
+#include <tuple>
 #include <string>
 #include <vector>
 #include <daw/json/daw_json_link.h>
 
-struct GlossDef_t: public daw::json::JsonLink<GlossDef_t> {
-	std::vector<std::string> GlossSeeAlso;
+struct GlossDef_t {
 	std::string para;
-
-	GlossDef_t( );
-	GlossDef_t( GlossDef_t const & other );
-	GlossDef_t( GlossDef_t && other );
-	~GlossDef_t( );
-
-	GlossDef_t & operator=( GlossDef_t const & ) = default;
-	GlossDef_t & operator=( GlossDef_t && ) = default;
-private:
-	void set_links( );
+	std::vector<std::string> GlossSeeAlso;
 };	// GlossDef_t
 
-struct GlossEntry_t: public daw::json::JsonLink<GlossEntry_t> {
-	std::string Abbrev;
-	std::string Acronym;
-	GlossDef_t GlossDef;
-	std::string GlossSee;
-	std::string GlossTerm;
+inline auto describe_json_class( GlossDef_t ) {
+	using namespace daw::json;
+	static constexpr char const para[] = "para";
+	static constexpr char const GlossSeeAlso[] = "GlossSeeAlso";
+	return daw::json::class_description_t<
+		json_string<para>
+		,json_array<GlossSeeAlso, std::vector<std::string>, json_string<no_name>>
+>{};
+}
+
+inline auto to_json_data( GlossDef_t const & value ) {
+	return std::forward_as_tuple( value.para, value.GlossSeeAlso );
+}
+
+struct GlossEntry_t {
 	std::string ID;
 	std::string SortAs;
-
-	GlossEntry_t( );
-	GlossEntry_t( GlossEntry_t const & other );
-	GlossEntry_t( GlossEntry_t && other );
-	~GlossEntry_t( );
-
-	GlossEntry_t & operator=( GlossEntry_t const & ) = default;
-	GlossEntry_t & operator=( GlossEntry_t && ) = default;
-private:
-	void set_links( );
+	std::string GlossTerm;
+	std::string Acronym;
+	std::string Abbrev;
+	GlossDef_t GlossDef;
+	std::string GlossSee;
 };	// GlossEntry_t
 
-struct GlossList_t: public daw::json::JsonLink<GlossList_t> {
+inline auto describe_json_class( GlossEntry_t ) {
+	using namespace daw::json;
+	static constexpr char const ID[] = "ID";
+	static constexpr char const SortAs[] = "SortAs";
+	static constexpr char const GlossTerm[] = "GlossTerm";
+	static constexpr char const Acronym[] = "Acronym";
+	static constexpr char const Abbrev[] = "Abbrev";
+	static constexpr char const GlossDef[] = "GlossDef";
+	static constexpr char const GlossSee[] = "GlossSee";
+	return daw::json::class_description_t<
+		json_string<ID>
+		,json_string<SortAs>
+		,json_string<GlossTerm>
+		,json_string<Acronym>
+		,json_string<Abbrev>
+		,json_class<GlossDef, GlossDef_t>
+		,json_string<GlossSee>
+>{};
+}
+
+inline auto to_json_data( GlossEntry_t const & value ) {
+	return std::forward_as_tuple( value.ID, value.SortAs, value.GlossTerm, value.Acronym, value.Abbrev, value.GlossDef, value.GlossSee );
+}
+
+struct GlossList_t {
 	GlossEntry_t GlossEntry;
-
-	GlossList_t( );
-	GlossList_t( GlossList_t const & other );
-	GlossList_t( GlossList_t && other );
-	~GlossList_t( );
-
-	GlossList_t & operator=( GlossList_t const & ) = default;
-	GlossList_t & operator=( GlossList_t && ) = default;
-private:
-	void set_links( );
 };	// GlossList_t
 
-struct GlossDiv_t: public daw::json::JsonLink<GlossDiv_t> {
-	GlossList_t GlossList;
+inline auto describe_json_class( GlossList_t ) {
+	using namespace daw::json;
+	static constexpr char const GlossEntry[] = "GlossEntry";
+	return daw::json::class_description_t<
+		json_class<GlossEntry, GlossEntry_t>
+>{};
+}
+
+inline auto to_json_data( GlossList_t const & value ) {
+	return std::forward_as_tuple( value.GlossEntry );
+}
+
+struct GlossDiv_t {
 	std::string title;
-
-	GlossDiv_t( );
-	GlossDiv_t( GlossDiv_t const & other );
-	GlossDiv_t( GlossDiv_t && other );
-	~GlossDiv_t( );
-
-	GlossDiv_t & operator=( GlossDiv_t const & ) = default;
-	GlossDiv_t & operator=( GlossDiv_t && ) = default;
-private:
-	void set_links( );
+	GlossList_t GlossList;
 };	// GlossDiv_t
 
-struct glossary_t: public daw::json::JsonLink<glossary_t> {
-	GlossDiv_t GlossDiv;
+inline auto describe_json_class( GlossDiv_t ) {
+	using namespace daw::json;
+	static constexpr char const title[] = "title";
+	static constexpr char const GlossList[] = "GlossList";
+	return daw::json::class_description_t<
+		json_string<title>
+		,json_class<GlossList, GlossList_t>
+>{};
+}
+
+inline auto to_json_data( GlossDiv_t const & value ) {
+	return std::forward_as_tuple( value.title, value.GlossList );
+}
+
+struct glossary_t {
 	std::string title;
-
-	glossary_t( );
-	glossary_t( glossary_t const & other );
-	glossary_t( glossary_t && other );
-	~glossary_t( );
-
-	glossary_t & operator=( glossary_t const & ) = default;
-	glossary_t & operator=( glossary_t && ) = default;
-private:
-	void set_links( );
+	GlossDiv_t GlossDiv;
 };	// glossary_t
 
-struct root_object_t: public daw::json::JsonLink<root_object_t> {
+inline auto describe_json_class( glossary_t ) {
+	using namespace daw::json;
+	static constexpr char const title[] = "title";
+	static constexpr char const GlossDiv[] = "GlossDiv";
+	return daw::json::class_description_t<
+		json_string<title>
+		,json_class<GlossDiv, GlossDiv_t>
+>{};
+}
+
+inline auto to_json_data( glossary_t const & value ) {
+	return std::forward_as_tuple( value.title, value.GlossDiv );
+}
+
+struct root_object_t {
 	glossary_t glossary;
-
-	root_object_t( );
-	root_object_t( root_object_t const & other );
-	root_object_t( root_object_t && other );
-	~root_object_t( );
-
-	root_object_t & operator=( root_object_t const & ) = default;
-	root_object_t & operator=( root_object_t && ) = default;
-private:
-	void set_links( );
 };	// root_object_t
 
-GlossDef_t::GlossDef_t( ):
-		daw::json::JsonLink<GlossDef_t>{ },
-		GlossSeeAlso{ },
-		para{ } {
-
-	set_links( );
+inline auto describe_json_class( root_object_t ) {
+	using namespace daw::json;
+	static constexpr char const glossary[] = "glossary";
+	return daw::json::class_description_t<
+		json_class<glossary, glossary_t>
+>{};
 }
 
-GlossDef_t::GlossDef_t( GlossDef_t const & other ):
-		daw::json::JsonLink<GlossDef_t>{ },
-		GlossSeeAlso{ other.GlossSeeAlso },
-		para{ other.para } {
-
-	set_links( );
-}
-
-GlossDef_t::GlossDef_t( GlossDef_t && other ):
-		daw::json::JsonLink<GlossDef_t>{ },
-		GlossSeeAlso{ std::move( other.GlossSeeAlso ) },
-		para{ std::move( other.para ) } {
-
-	set_links( );
-}
-
-GlossDef_t::~GlossDef_t( ) { }
-
-void GlossDef_t::set_links( ) {
-	link_array( "GlossSeeAlso", GlossSeeAlso );
-	link_string( "para", para );
-}
-
-GlossEntry_t::GlossEntry_t( ):
-		daw::json::JsonLink<GlossEntry_t>{ },
-		Abbrev{ },
-		Acronym{ },
-		GlossDef{ },
-		GlossSee{ },
-		GlossTerm{ },
-		ID{ },
-		SortAs{ } {
-
-	set_links( );
-}
-
-GlossEntry_t::GlossEntry_t( GlossEntry_t const & other ):
-		daw::json::JsonLink<GlossEntry_t>{ },
-		Abbrev{ other.Abbrev },
-		Acronym{ other.Acronym },
-		GlossDef{ other.GlossDef },
-		GlossSee{ other.GlossSee },
-		GlossTerm{ other.GlossTerm },
-		ID{ other.ID },
-		SortAs{ other.SortAs } {
-
-	set_links( );
-}
-
-GlossEntry_t::GlossEntry_t( GlossEntry_t && other ):
-		daw::json::JsonLink<GlossEntry_t>{ },
-		Abbrev{ std::move( other.Abbrev ) },
-		Acronym{ std::move( other.Acronym ) },
-		GlossDef{ std::move( other.GlossDef ) },
-		GlossSee{ std::move( other.GlossSee ) },
-		GlossTerm{ std::move( other.GlossTerm ) },
-		ID{ std::move( other.ID ) },
-		SortAs{ std::move( other.SortAs ) } {
-
-	set_links( );
-}
-
-GlossEntry_t::~GlossEntry_t( ) { }
-
-void GlossEntry_t::set_links( ) {
-	link_string( "Abbrev", Abbrev );
-	link_string( "Acronym", Acronym );
-	link_object( "GlossDef", GlossDef );
-	link_string( "GlossSee", GlossSee );
-	link_string( "GlossTerm", GlossTerm );
-	link_string( "ID", ID );
-	link_string( "SortAs", SortAs );
-}
-
-GlossList_t::GlossList_t( ):
-		daw::json::JsonLink<GlossList_t>{ },
-		GlossEntry{ } {
-
-	set_links( );
-}
-
-GlossList_t::GlossList_t( GlossList_t const & other ):
-		daw::json::JsonLink<GlossList_t>{ },
-		GlossEntry{ other.GlossEntry } {
-
-	set_links( );
-}
-
-GlossList_t::GlossList_t( GlossList_t && other ):
-		daw::json::JsonLink<GlossList_t>{ },
-		GlossEntry{ std::move( other.GlossEntry ) } {
-
-	set_links( );
-}
-
-GlossList_t::~GlossList_t( ) { }
-
-void GlossList_t::set_links( ) {
-	link_object( "GlossEntry", GlossEntry );
-}
-
-GlossDiv_t::GlossDiv_t( ):
-		daw::json::JsonLink<GlossDiv_t>{ },
-		GlossList{ },
-		title{ } {
-
-	set_links( );
-}
-
-GlossDiv_t::GlossDiv_t( GlossDiv_t const & other ):
-		daw::json::JsonLink<GlossDiv_t>{ },
-		GlossList{ other.GlossList },
-		title{ other.title } {
-
-	set_links( );
-}
-
-GlossDiv_t::GlossDiv_t( GlossDiv_t && other ):
-		daw::json::JsonLink<GlossDiv_t>{ },
-		GlossList{ std::move( other.GlossList ) },
-		title{ std::move( other.title ) } {
-
-	set_links( );
-}
-
-GlossDiv_t::~GlossDiv_t( ) { }
-
-void GlossDiv_t::set_links( ) {
-	link_object( "GlossList", GlossList );
-	link_string( "title", title );
-}
-
-glossary_t::glossary_t( ):
-		daw::json::JsonLink<glossary_t>{ },
-		GlossDiv{ },
-		title{ } {
-
-	set_links( );
-}
-
-glossary_t::glossary_t( glossary_t const & other ):
-		daw::json::JsonLink<glossary_t>{ },
-		GlossDiv{ other.GlossDiv },
-		title{ other.title } {
-
-	set_links( );
-}
-
-glossary_t::glossary_t( glossary_t && other ):
-		daw::json::JsonLink<glossary_t>{ },
-		GlossDiv{ std::move( other.GlossDiv ) },
-		title{ std::move( other.title ) } {
-
-	set_links( );
-}
-
-glossary_t::~glossary_t( ) { }
-
-void glossary_t::set_links( ) {
-	link_object( "GlossDiv", GlossDiv );
-	link_string( "title", title );
-}
-
-root_object_t::root_object_t( ):
-		daw::json::JsonLink<root_object_t>{ },
-		glossary{ } {
-
-	set_links( );
-}
-
-root_object_t::root_object_t( root_object_t const & other ):
-		daw::json::JsonLink<root_object_t>{ },
-		glossary{ other.glossary } {
-
-	set_links( );
-}
-
-root_object_t::root_object_t( root_object_t && other ):
-		daw::json::JsonLink<root_object_t>{ },
-		glossary{ std::move( other.glossary ) } {
-
-	set_links( );
-}
-
-root_object_t::~root_object_t( ) { }
-
-void root_object_t::set_links( ) {
-	link_object( "glossary", glossary );
+inline auto to_json_data( root_object_t const & value ) {
+	return std::forward_as_tuple( value.glossary );
 }
 ```
