@@ -56,7 +56,7 @@ namespace daw {
 
 		namespace {
 			/// Add a "json_" prefix to C++ keywords
-			std::string replace_keywords( std::string name ) {
+			std::string make_compliant_names( std::string name ) {
 				// These identifiers cannot be used in c++, we will prefix them to keep
 				// them from colliding with keywords
 				// clang-format off
@@ -75,7 +75,11 @@ namespace daw {
 				 	"union", "unsigned", "using", "virtual", "void", "volatile", "wchar_t", "while", "xor", "xor_eq"} );
 				// clang-format on
 
-				if( keywords.count( {name.data( ), name.size( )} ) > 0 ) {
+				// JSON member names are strings.  That is it, so empty looks
+				// like it is valid, as is all digits, or C++ keyworks.
+				if( name.empty( ) or std::isdigit( name.front( ) ) or
+				    keywords.count( {name.data( ), name.size( )} ) > 0 ) {
+
 					std::string const prefix = "_json";
 					name.insert( name.begin( ), prefix.begin( ), prefix.end( ) );
 				}
@@ -472,7 +476,7 @@ namespace daw {
 					auto result = types::ti_object{cur_name.to_string( ) + "_t"};
 					for( auto const &child : current_item.get_object( ) ) {
 						std::string const child_name =
-						  replace_keywords( child.first.to_string( ) );
+						  make_compliant_names( child.first.to_string( ) );
 						result.children[child_name] = parse_json_object(
 						  child.second, child_name, obj_info, obj_state );
 					}
