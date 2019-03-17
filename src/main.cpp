@@ -55,6 +55,8 @@ int main( int argc, char **argv ) {
 	  "use_jsonlink",
 	  boost::program_options::value<bool>( )->default_value( true ),
 	  "Use JsonLink serializaion/deserialization" )(
+	  "output_file", boost::program_options::value<boost::filesystem::path>( ),
+	  "output goes to c++ header file." )(
 	  "allow_overwrite",
 	  boost::program_options::value<bool>( )->default_value( true ),
 
@@ -129,9 +131,9 @@ int main( int argc, char **argv ) {
 	if( vm.count( "cpp_file" ) > 0 ) {
 		bool const allow_overwrite = vm["allow_overwrite"].as<bool>( );
 		config.cpp_path =
-		  canonical( vm["cpp_file"].as<boost::filesystem::path>( ) );
+		  canonical( vm["output_file"].as<boost::filesystem::path>( ) );
 		if( exists( config.cpp_path ) && !allow_overwrite ) {
-			std::cerr << "cpp_file '" << config.cpp_path << "' already exists\n";
+			std::cerr << "output_file '" << config.cpp_path << "' already exists\n";
 			exit( EXIT_FAILURE );
 		}
 		cpp_file.open( config.cpp_path.string( ), std::ios::out | std::ios::trunc );
@@ -141,28 +143,7 @@ int main( int argc, char **argv ) {
 			exit( EXIT_FAILURE );
 		}
 		config.cpp_stream = &cpp_file;
-
-		if( config.enable_jsonlink && vm.count( "header_file" ) > 0 ) {
-			config.header_path =
-			  canonical( vm["header_file"].as<boost::filesystem::path>( ) );
-			if( exists( config.header_path ) && !allow_overwrite ) {
-				std::cerr << "header_file '" << config.header_path
-				          << "' already exists\n";
-				exit( EXIT_FAILURE );
-			}
-			header_file.open( config.header_path.string( ),
-			                  std::ios::out | std::ios::trunc );
-			if( !header_file ) {
-				std::cerr << "Could not open header_file '" << config.header_path
-				          << "' for writing\n";
-				exit( EXIT_FAILURE );
-			}
-			config.header_stream = &header_file;
-			config.separate_files = true;
-		} else {
-			config.header_stream = &cpp_file;
-			config.separate_files = false;
-		}
+		config.header_stream = &cpp_file;
 	}
 	generate_cpp( json_str, config );
 
