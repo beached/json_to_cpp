@@ -392,28 +392,21 @@ namespace daw {
 					return;
 				}
 
-				types::ti_object &orig = *pos;
 				std::vector<std::pair<std::string, types::ti_value>> diff{};
-
-				static auto const comp = []( auto const &c1, auto const &c2 ) {
-					return c1.first < c2.first;
-				};
-				std::set_difference( orig.children.begin( ), orig.children.end( ),
-				                     obj.children.begin( ), obj.children.end( ),
-				                     std::back_inserter( diff ), comp );
-
-				for( auto &child : diff ) {
-					if( child.second.is_null( ) ) {
-						if( !orig.children[child.first].is_null( ) ) {
-							orig.children[child.first] = child.second;
-						}
-						orig.children[child.first].is_optional( ) = true;
-					} else if( orig.children[child.first].is_null( ) ) {
-						orig.children[child.first] = child.second;
-					} /* else {
-					   orig.children[child.first] = child.second;
-					 }*/
-					orig.children[child.first].is_optional( ) = true;
+				for( auto &orig_child : pos->children ) {
+					auto child_pos = std::find_if(
+					  obj.children.begin( ), obj.children.end( ),
+					  [&]( auto const &v ) { return v.first == orig_child.first; } );
+					if( child_pos == obj.children.end( ) ) {
+						orig_child.second.is_optional( ) = true;
+						continue;
+					}
+					if( child_pos->second.is_null( ) ) {
+						orig_child.second.is_optional( ) = true;
+					} else if( orig_child.second.is_null( ) ) {
+						orig_child.second = child_pos->second;
+						orig_child.second.is_optional( ) = true;
+					}
 				}
 			}
 
@@ -424,10 +417,11 @@ namespace daw {
 				if( a.is_null( ) ) {
 					result = b;
 					result.is_optional( ) = true;
-				} else if( b.is_null( ) ) {
-					result = a;
-					result.is_optional( ) = true;
 				} else {
+					if( b.is_null( ) ) {
+						result = a;
+						result.is_optional( ) = true;
+					}
 					result = a;
 					result.is_optional( ) = a.is_optional( ) or b.is_optional( );
 				}
