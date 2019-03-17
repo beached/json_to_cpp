@@ -21,21 +21,21 @@
 // SOFTWARE.
 
 #include <algorithm>
+#include <any>
 #include <limits>
 #include <map>
 #include <string>
 #include <tuple>
 #include <typeindex>
-#include <unordered_map>
-#include <unordered_set>
 
 #include <daw/daw_bounded_hash_set.h>
+#include <daw/daw_ordered_map.h>
 #include <daw/daw_string_view.h>
-
-#include "json_to_cpp.h"
 #include <daw/json/daw_json_parser.h>
 #include <daw/json/daw_json_parser_v2.h>
 #include <daw/json/daw_json_value_t.h>
+
+#include "json_to_cpp.h"
 
 namespace daw {
 	namespace json_to_cpp {
@@ -57,99 +57,23 @@ namespace daw {
 		namespace {
 			/// Add a "json_" prefix to C++ keywords
 			std::string replace_keywords( std::string name ) {
+				// These identifiers cannot be used in c++, we will prefix them to keep
+				// them from colliding with keywords
+				// clang-format off
 				static constexpr auto keywords =
-				  daw::make_bounded_hash_set<daw::string_view>( {"alignas",
-				                                                 "alignof",
-				                                                 "and",
-				                                                 "and_eq",
-				                                                 "asm",
-				                                                 "atomic_cancel",
-				                                                 "atomic_commit",
-				                                                 "atomic_noexcept",
-				                                                 "auto",
-				                                                 "bitand",
-				                                                 "bitor",
-				                                                 "bool",
-				                                                 "break",
-				                                                 "case",
-				                                                 "catch",
-				                                                 "char",
-				                                                 "char16_t",
-				                                                 "char32_t",
-				                                                 "class",
-				                                                 "compl",
-				                                                 "concept",
-				                                                 "const",
-				                                                 "constexpr",
-				                                                 "const_cast",
-				                                                 "continue",
-				                                                 "decltype",
-				                                                 "default",
-				                                                 "delete",
-				                                                 "do",
-				                                                 "double",
-				                                                 "dynamic_cast",
-				                                                 "else",
-				                                                 "enum",
-				                                                 "explicit",
-				                                                 "export",
-				                                                 "extern",
-				                                                 "false",
-				                                                 "float",
-				                                                 "for",
-				                                                 "friend",
-				                                                 "goto",
-				                                                 "if",
-				                                                 "import",
-				                                                 "inline",
-				                                                 "int",
-				                                                 "long",
-				                                                 "module",
-				                                                 "mutable",
-				                                                 "namespace",
-				                                                 "new",
-				                                                 "noexcept",
-				                                                 "not",
-				                                                 "not_eq",
-				                                                 "nullptr",
-				                                                 "operator",
-				                                                 "or",
-				                                                 "or_eq",
-				                                                 "private",
-				                                                 "protected",
-				                                                 "public",
-				                                                 "register",
-				                                                 "reinterpret_cast",
-				                                                 "requires",
-				                                                 "return",
-				                                                 "short",
-				                                                 "signed",
-				                                                 "sizeof",
-				                                                 "static",
-				                                                 "static_assert",
-				                                                 "static_cast",
-				                                                 "struct",
-				                                                 "switch",
-				                                                 "synchronized",
-				                                                 "template",
-				                                                 "this",
-				                                                 "thread_local",
-				                                                 "throw",
-				                                                 "true",
-				                                                 "try",
-				                                                 "typedef",
-				                                                 "typeid",
-				                                                 "typename",
-				                                                 "union",
-				                                                 "unsigned",
-				                                                 "using",
-				                                                 "virtual",
-				                                                 "void",
-				                                                 "volatile",
-				                                                 "wchar_t",
-				                                                 "while",
-				                                                 "xor",
-				                                                 "xor_eq"} );
+				  daw::make_bounded_hash_set<daw::string_view>( {
+					"alignas", "alignof", "and", "and_eq", "asm", "atomic_cancel", "atomic_commit",
+				 	"atomic_noexcept", "auto", "bitand", "bitor", "bool", "break", "case", "catch",
+				 	"char", "char16_t", "char32_t", "class", "compl", "concept", "const", "constexpr",
+				 	"const_cast", "continue", "decltype", "default", "delete", "do", "double", "dynamic_cast",
+				 	"else", "enum", "explicit", "export", "extern", "false", "float", "for", "friend",
+				 	"goto", "if", "import", "inline", "int", "long", "module", "mutable", "namespace",
+				 	"new", "noexcept", "not", "not_eq", "nullptr", "operator", "or", "or_eq", "private",
+				 	"protected", "public", "register", "reinterpret_cast", "requires", "return", "short",
+				 	"signed", "sizeof", "static", "static_assert", "static_cast", "struct", "switch", "synchronized",
+				 	"template", "this", "thread_local", "throw", "true", "try", "typedef", "typeid", "typename",
+				 	"union", "unsigned", "using", "virtual", "void", "volatile", "wchar_t", "while", "xor", "xor_eq"} );
+				// clang-format on
 
 				if( keywords.count( {name.data( ), name.size( )} ) > 0 ) {
 					std::string const prefix = "_json";
@@ -167,8 +91,8 @@ namespace daw {
 
 					std::string name( ) const noexcept;
 					std::string json_name( std::string member_name ) const noexcept;
-					std::map<std::string, ti_value> const &children( ) const;
-					std::map<std::string, ti_value> &children( );
+					daw::ordered_map<std::string, ti_value> const &children( ) const;
+					daw::ordered_map<std::string, ti_value> &children( );
 					bool &is_optional( ) noexcept;
 					bool const &is_optional( ) const noexcept;
 
@@ -224,7 +148,7 @@ namespace daw {
 				}
 
 				struct type_info_t {
-					std::map<std::string, ti_value> children{};
+					daw::ordered_map<std::string, ti_value> children{};
 					bool is_optional = false;
 
 					type_info_t( ) = default;
@@ -260,11 +184,12 @@ namespace daw {
 					return value->type( );
 				}
 
-				std::map<std::string, ti_value> const &ti_value::children( ) const {
+				daw::ordered_map<std::string, ti_value> const &
+				ti_value::children( ) const {
 					return value->children;
 				}
 
-				std::map<std::string, ti_value> &ti_value::children( ) {
+				daw::ordered_map<std::string, ti_value> &ti_value::children( ) {
 					return value->children;
 				}
 
