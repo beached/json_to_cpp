@@ -58,8 +58,7 @@ int main( int argc, char **argv ) {
 	  "output_file", boost::program_options::value<boost::filesystem::path>( ),
 	  "output goes to c++ header file." )(
 	  "allow_overwrite",
-	  boost::program_options::value<bool>( )->default_value( true ),
-
+	  boost::program_options::value<bool>( )->default_value( false ),
 	  "Overwrite existing output files" )(
 	  "hide_null_only",
 	  boost::program_options::value<bool>( )->default_value( true ),
