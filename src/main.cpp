@@ -47,6 +47,7 @@ int main( int argc, char **argv ) {
 	  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
 	  "Chrome/54.0.2840.100 Safari/537.36";
 
+	// TODO fix. we only generate headers now
 	boost::program_options::options_description desc{"Options"};
 	desc.add_options( )( "help", "print option descriptions" )(
 	  "in_file", boost::program_options::value<boost::filesystem::path>( ),
