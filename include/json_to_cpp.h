@@ -30,13 +30,11 @@
 namespace daw {
 	namespace json_to_cpp {
 		struct config_t final {
-			bool enable_jsonlink;
-			std::ostream *header_stream;
-			std::ostream *cpp_stream;
+			bool enable_jsonlink = true;
+			std::ostream *header_stream = nullptr;
+			std::ostream *cpp_stream = nullptr;
 			boost::filesystem::path cpp_path;
-			boost::filesystem::path header_path;
 			boost::filesystem::path json_path;
-			bool separate_files;
 			bool hide_null_only;
 			std::ostream &header_file( );
 			std::ostream &cpp_file( );

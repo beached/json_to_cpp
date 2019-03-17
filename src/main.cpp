@@ -55,11 +55,6 @@ int main( int argc, char **argv ) {
 	  "use_jsonlink",
 	  boost::program_options::value<bool>( )->default_value( true ),
 	  "Use JsonLink serializaion/deserialization" )(
-	  "cpp_file", boost::program_options::value<boost::filesystem::path>( ),
-	  "output c++ file" )(
-	  "header_file", boost::program_options::value<boost::filesystem::path>( ),
-	  "output c++ header file.  If not specified uses cpp_file.  Only valid when "
-	  "use_jsonlink=true" )(
 	  "allow_overwrite",
 	  boost::program_options::value<bool>( )->default_value( true ),
 

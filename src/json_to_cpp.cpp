@@ -77,7 +77,8 @@ namespace daw {
 
 				// JSON member names are strings.  That is it, so empty looks
 				// like it is valid, as is all digits, or C++ keyworks.
-				if( name.empty( ) or !(std::isalpha( name.front( ) ) or name.front( ) == '_' ) or
+				if( name.empty( ) or
+				    !( std::isalpha( name.front( ) ) or name.front( ) == '_' ) or
 				    keywords.count( {name.data( ), name.size( )} ) > 0 ) {
 
 					std::string const prefix = "_json";
@@ -86,9 +87,10 @@ namespace daw {
 				// Look for characters that are not in the basic standard 5.10
 				// non-digit or digit and escape them
 				for( auto it = name.begin( ); it != name.end( ); ++it ) {
-					if( !(std::isalnum( *it ) or *it == '_') ) {
-						std::string const val_rng = "0x" + std::to_string( static_cast<int>( *it ) );
-						for( auto c: val_rng ) {
+					if( !( std::isalnum( *it ) or *it == '_' ) ) {
+						std::string const val_rng =
+						  "0x" + std::to_string( static_cast<int>( *it ) );
+						for( auto c : val_rng ) {
 							it = name.insert( it, c );
 							++it;
 						}
@@ -649,23 +651,12 @@ namespace daw {
 					std::string const header_message =
 					  "// Code auto generated from json file '" +
 					  config.json_path.string( ) + "'\n\n";
-					if( definition ) {
-						if( config.separate_files ) {
-							config.cpp_file( ) << header_message;
-						}
-					} else {
+					if( !definition ) {
 						config.header_file( ) << header_message;
 					}
 				}
-				if( definition ) {
-					if( config.separate_files ) {
-						config.cpp_file( )
-						  << "#include " << config.header_path.filename( ) << "\n\n";
-					}
-				} else {
-					if( config.separate_files ) {
-						config.header_file( ) << "#pragma once\n\n";
-					}
+				if( !definition ) {
+					config.header_file( ) << "#pragma once\n\n";
 					config.header_file( ) << "#include <tuple>\n";
 					if( obj_state.has_optionals )
 						config.header_file( ) << "#include <optional>\n";
