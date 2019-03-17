@@ -55,6 +55,11 @@ namespace daw {
 		};
 
 		namespace {
+			constexpr bool is_valid_id_char( char c ) noexcept {
+				return ( 'A' <= c and c <= 'Z' ) or ( 'a' <= c and c <= 'z' ) or
+				       c == '_';
+			}
+
 			/// Add a "json_" prefix to C++ keywords
 			std::string make_compliant_names( std::string name ) {
 				// These identifiers cannot be used in c++, we will prefix them to keep
@@ -87,9 +92,10 @@ namespace daw {
 				// Look for characters that are not in the basic standard 5.10
 				// non-digit or digit and escape them
 				for( auto it = name.begin( ); it != name.end( ); ++it ) {
-					if( !( std::isalnum( *it ) or *it == '_' ) ) {
+					if( !is_valid_id_char( *it ) ) {
 						std::string const val_rng =
-						  "0x" + std::to_string( static_cast<int>( *it ) );
+						  "x" + std::to_string( static_cast<int>( *it ) );
+						*it++ = '0';
 						for( auto c : val_rng ) {
 							it = name.insert( it, c );
 							++it;
