@@ -77,11 +77,22 @@ namespace daw {
 
 				// JSON member names are strings.  That is it, so empty looks
 				// like it is valid, as is all digits, or C++ keyworks.
-				if( name.empty( ) or std::isdigit( name.front( ) ) or
+				if( name.empty( ) or !(std::isalpha( name.front( ) ) or name.front( ) == '_' ) or
 				    keywords.count( {name.data( ), name.size( )} ) > 0 ) {
 
 					std::string const prefix = "_json";
 					name.insert( name.begin( ), prefix.begin( ), prefix.end( ) );
+				}
+				// Look for characters that are not in the basic standard 5.10
+				// non-digit or digit and escape them
+				for( auto it = name.begin( ); it != name.end( ); ++it ) {
+					if( !(std::isalnum( *it ) or *it == '_') ) {
+						std::string const val_rng = "0x" + std::to_string( static_cast<int>( *it ) );
+						for( auto c: val_rng ) {
+							it = name.insert( it, c );
+							++it;
+						}
+					}
 				}
 				return name;
 			}
