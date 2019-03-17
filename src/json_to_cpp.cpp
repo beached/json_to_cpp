@@ -416,6 +416,10 @@ namespace daw {
 				                     } );
 			}
 
+			constexpr bool is_double( size_t t ) noexcept {
+				return t == json::json_value_t::index_of<json::json_value_t::real_t>( );
+			}
+
 			void add_or_merge( std::vector<types::ti_object> &obj_info,
 			                   types::ti_object const &obj ) {
 				auto pos =
@@ -440,6 +444,13 @@ namespace daw {
 					} else if( orig_child.second.is_null( ) ) {
 						orig_child.second = child_pos->second;
 						orig_child.second.is_optional( ) = true;
+					} else if( is_double( child_pos->second.type( ) ) ) {
+						// Account for when the LHS is an int but the value should actually
+						// be a double
+						auto const is_opt = orig_child.second.is_optional( );
+						orig_child.second = orig_child.second;
+						orig_child.second.is_optional( ) =
+						  orig_child.second.is_optional( ) or is_opt;
 					}
 				}
 			}
