@@ -59,12 +59,6 @@ namespace daw {
 				return ( std::isalnum( c ) != 0 ) or c == '_';
 			}
 
-			struct not_valid_id_char_t {
-				bool operator( )( char c ) const noexcept {
-					return !is_valid_id_char( c );
-				}
-			};
-
 			std::string find_replace( std::string subject, std::string const &search,
 			                          std::string const &replace ) {
 				size_t pos = 0;
@@ -94,7 +88,7 @@ namespace daw {
 				 	"template", "this", "thread_local", "throw", "true", "try", "typedef", "typeid", "typename",
 				 	"union", "unsigned", "using", "virtual", "void", "volatile", "wchar_t", "while", "xor", "xor_eq"} );
 				// clang-format on
-				// Remove escapes
+				// Remove escaped things
 				name = find_replace( name, "\\U", "0x" );
 				name = find_replace( name, "\\u", "0x" );
 				// JSON member names are strings.  That is it, so empty looks
@@ -106,8 +100,6 @@ namespace daw {
 					std::string const prefix = "_json";
 					name.insert( name.begin( ), prefix.begin( ), prefix.end( ) );
 				}
-				// Remove escaped things
-
 				// Look for characters that are not in the basic standard 5.10
 				// non-digit or digit and escape them
 				std::string new_name{};
