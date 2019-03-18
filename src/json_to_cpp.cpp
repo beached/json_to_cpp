@@ -347,21 +347,36 @@ namespace daw {
 					}
 				};
 
-				struct ti_string : public type_info_t {
+				class ti_string : public type_info_t {
+					bool m_use_string_view;
+
+				public:
+					ti_string( bool use_string_view )
+					  : m_use_string_view( use_string_view ) {}
+
 					size_t type( ) const override {
 						return daw::json::json_value_t::index_of<
 						  daw::json::json_value_t::string_t>( );
 					}
 
 					std::string name( ) const override {
+						if( m_use_string_view ) {
+							return "std::string_view";
+						}
 						return "std::string";
 					}
 
 					virtual std::string array_member_info( ) const override {
+						if( m_use_string_view ) {
+							return "json_string<no_name, std::string_view>";
+						}
 						return "json_string<no_name>";
 					}
 
 					std::string json_name( std::string member_name ) const override {
+						if( m_use_string_view ) {
+							return "json_string<" + member_name + ", std::string_view>";
+						}
 						return "json_string<" + member_name + ">";
 					}
 
@@ -492,9 +507,11 @@ namespace daw {
 				return result;
 			}
 
-			types::ti_value parse_json_object(
-			  daw::json::json_value_t const &current_item, daw::string_view cur_name,
-			  std::vector<types::ti_object> &obj_info, state_t &obj_state ) {
+			types::ti_value
+			parse_json_object( daw::json::json_value_t const &current_item,
+			                   daw::string_view cur_name,
+			                   std::vector<types::ti_object> &obj_info,
+			                   state_t &obj_state, config_t const &config ) {
 
 				using daw::json::json_value_t;
 				if( current_item.is_integer( ) ) {
@@ -509,7 +526,8 @@ namespace daw {
 				}
 				if( current_item.is_string( ) ) {
 					obj_state.has_strings = true;
-					return types::create_ti_value<types::ti_string>( );
+					return types::create_ti_value<types::ti_string>(
+					  config.use_string_view );
 				}
 				if( current_item.is_null( ) ) {
 					obj_state.has_optionals = true;
@@ -521,7 +539,7 @@ namespace daw {
 						std::string const child_name =
 						  make_compliant_names( child.first.to_string( ) );
 						result.children[child_name] = parse_json_object(
-						  child.second, child_name, obj_info, obj_state );
+						  child.second, child_name, obj_info, obj_state, config );
 					}
 					add_or_merge( obj_info, result );
 					return result;
@@ -537,12 +555,12 @@ namespace daw {
 					} else {
 						auto const last_item = arry.back( );
 						arry.pop_back( );
-						auto child =
-						  parse_json_object( last_item, child_name, obj_info, obj_state );
+						auto child = parse_json_object( last_item, child_name, obj_info,
+						                                obj_state, config );
 						for( auto const &element : current_item.get_array( ) ) {
 							child = merge_array_values(
-							  child,
-							  parse_json_object( element, child_name, obj_info, obj_state ) );
+							  child, parse_json_object( element, child_name, obj_info,
+							                            obj_state, config ) );
 						}
 						result.children( )[child_name] = child;
 					}
@@ -554,7 +572,7 @@ namespace daw {
 
 			std::vector<types::ti_object>
 			parse_json_object( daw::json::json_value_t const &current_item,
-			                   state_t &obj_state ) {
+			                   state_t &obj_state, config_t const &config ) {
 				using namespace daw::json;
 				std::vector<types::ti_object> result{};
 
@@ -564,9 +582,11 @@ namespace daw {
 					json_object_value root_object;
 					root_object.members_v.push_back( std::move( root_obj_member ) );
 					json_value_t root_value{std::move( root_object )};
-					parse_json_object( root_value, "root_object", result, obj_state );
+					parse_json_object( root_value, "root_object", result, obj_state,
+					                   config );
 				} else {
-					parse_json_object( current_item, "root_object", result, obj_state );
+					parse_json_object( current_item, "root_object", result, obj_state,
+					                   config );
 				}
 				return result;
 			}
@@ -693,7 +713,11 @@ namespace daw {
 					if( obj_state.has_integrals )
 						config.header_file( ) << "#include <cstdint>\n";
 					if( obj_state.has_strings )
-						config.header_file( ) << "#include <string>\n";
+						if( config.use_string_view ) {
+							config.header_file( ) << "#include <string_view>\n";
+						} else {
+							config.header_file( ) << "#include <string>\n";
+						}
 					if( obj_state.has_arrays )
 						config.header_file( ) << "#include <vector>\n";
 					if( config.enable_jsonlink )
@@ -752,7 +776,7 @@ namespace daw {
 		void generate_cpp( daw::string_view json_string, config_t &config ) {
 			state_t obj_state;
 			auto json_obj = daw::json::parse_json( json_string );
-			auto obj_info = parse_json_object( json_obj, obj_state );
+			auto obj_info = parse_json_object( json_obj, obj_state, config );
 			generate_code( obj_info, config, obj_state );
 		}
 	} // namespace json_to_cpp

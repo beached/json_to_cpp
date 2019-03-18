@@ -63,6 +63,10 @@ int main( int argc, char **argv ) {
 	  "hide_null_only",
 	  boost::program_options::value<bool>( )->default_value( true ),
 	  "Do not output json entries that are only ever null" )(
+	  "use_string_view",
+	  boost::program_options::value<bool>( )->default_value( false ),
+	  "Use std::string_view instead of std::string.  Must ensure buffer is "
+	  "available after parsing when this is used" )(
 	  "user_agent",
 	  boost::program_options::value<std::string>( )->default_value(
 	    default_user_agent ),
@@ -124,6 +128,7 @@ int main( int argc, char **argv ) {
 	config.header_stream = &std::cout;
 	config.enable_jsonlink = vm["use_jsonlink"].as<bool>( );
 	config.hide_null_only = vm["allow_overwrite"].as<bool>( );
+	config.use_string_view = vm["use_string_view"].as<bool>( );
 	std::ofstream cpp_file;
 	std::ofstream header_file;
 
