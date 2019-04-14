@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016-2019 Darrell Wright
+// Copyright (c) 2019 Darrell Wright
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files( the "Software" ), to
@@ -20,27 +20,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
+#include <cstddef>
+#include <string>
 
-#include <boost/filesystem/path.hpp>
-#include <ostream>
+#include "ti_object.h"
 
-#include <daw/daw_string_view.h>
+namespace daw::json_to_cpp::types {
+	size_t ti_object::type( ) const {
+		return daw::json::json_value_t::index_of<
+		  daw::json::json_value_t::object_t>( );
+	}
 
-namespace daw::json_to_cpp {
-	struct config_t final {
-		bool enable_jsonlink = true;
-		std::ostream *header_stream = nullptr;
-		std::ostream *cpp_stream = nullptr;
-		boost::filesystem::path cpp_path;
-		boost::filesystem::path json_path;
-		std::vector<std::string> kv_paths;
-		bool hide_null_only;
-		bool use_string_view;
+	std::string ti_object::name( ) const {
+		return object_name;
+	}
 
-		std::ostream &header_file( );
-		std::ostream &cpp_file( );
-	}; // config_t
+	ti_object::ti_object( std::string obj_name )
+	  : type_info_t{}
+	  , object_name{std::move( obj_name )} {}
 
-	void generate_cpp( daw::string_view json_string, config_t &config );
-} // namespace daw::json_to_cpp
+	type_info_t *ti_object::clone( ) const {
+		return new ti_object( *this );
+	}
+
+	std::string ti_object::array_member_info( ) const {
+		return "json_class<no_name, " + name( ) + ">";
+	}
+
+	std::string ti_object::json_name( std::string member_name ) const {
+		return "json_class<" + member_name + ", " + name( ) + ">";
+	}
+} // namespace daw::json_to_cpp::types

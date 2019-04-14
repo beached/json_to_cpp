@@ -30,6 +30,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include <daw/daw_string_view.h>
 
@@ -52,6 +53,8 @@ int main( int argc, char **argv ) {
 	desc.add_options( )( "help", "print option descriptions" )(
 	  "in_file", boost::program_options::value<boost::filesystem::path>( ),
 	  "json source file path or url" )(
+	  "kv_paths", boost::program_options::value<std::vector<std::string>>( ),
+	  "Specify class members that are key value pairs" )(
 	  "use_jsonlink",
 	  boost::program_options::value<bool>( )->default_value( true ),
 	  "Use JsonLink serializaion/deserialization" )(
@@ -94,6 +97,10 @@ int main( int argc, char **argv ) {
 	}
 	config.json_path = vm["in_file"].as<boost::filesystem::path>( );
 
+	if( vm.count( "kv_paths" ) > 0 ) {
+		config.kv_paths	= vm["kv_paths"].as<std::vector<std::string>>( );
+	}
+
 	std::string json_str;
 	if( is_url( config.json_path.string( ) ) ) {
 		auto tmp = download( config.json_path.string( ),
@@ -127,7 +134,7 @@ int main( int argc, char **argv ) {
 	config.cpp_stream = &std::cout;
 	config.header_stream = &std::cout;
 	config.enable_jsonlink = vm["use_jsonlink"].as<bool>( );
-	config.hide_null_only = vm["allow_overwrite"].as<bool>( );
+	config.hide_null_only = vm["hide_null_only"].as<bool>( );
 	config.use_string_view = vm["use_string_view"].as<bool>( );
 	std::ofstream cpp_file;
 	std::ofstream header_file;
@@ -210,7 +217,7 @@ namespace {
 			return std::nullopt;
 		}
 
-		return httpData;
+		return {std::move( httpData )};
 	}
 
 	bool is_url( daw::string_view path ) {

@@ -53,10 +53,28 @@ link_directories( ${Boost_LIBRARY_DIRS} )
 
 set( HEADER_FILES
 	${HEADER_FOLDER}/json_to_cpp.h
+	${HEADER_FOLDER}/ti_value.h
+	${HEADER_FOLDER}/type_info.h
+	${HEADER_FOLDER}/ti_array.h
+	${HEADER_FOLDER}/ti_boolean.h
+	${HEADER_FOLDER}/ti_integral.h
+	${HEADER_FOLDER}/ti_null.h
+	${HEADER_FOLDER}/ti_object.h
+	${HEADER_FOLDER}/ti_real.h
+	${HEADER_FOLDER}/ti_string.h
+	${HEADER_FOLDER}/ti_types.h
 )
 
 set( SOURCE_FILES
 	${SOURCE_FOLDER}/json_to_cpp.cpp
+	${SOURCE_FOLDER}/ti_value.cpp
+	${SOURCE_FOLDER}/ti_array.cpp
+	${SOURCE_FOLDER}/ti_boolean.cpp
+	${SOURCE_FOLDER}/ti_integral.cpp
+	${SOURCE_FOLDER}/ti_null.cpp
+	${SOURCE_FOLDER}/ti_object.cpp
+	${SOURCE_FOLDER}/ti_real.cpp
+	${SOURCE_FOLDER}/ti_string.cpp
 )
 
 add_library( json_to_cpp ${HEADER_FILES} ${SOURCE_FILES} )

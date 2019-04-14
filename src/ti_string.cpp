@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016-2019 Darrell Wright
+// Copyright (c) 2019 Darrell Wright
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files( the "Software" ), to
@@ -20,27 +20,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
+#include <cstddef>
+#include <string>
 
-#include <boost/filesystem/path.hpp>
-#include <ostream>
+#include "ti_string.h"
 
-#include <daw/daw_string_view.h>
+namespace daw::json_to_cpp::types {
+	ti_string::ti_string( bool use_string_view )
+	  : m_use_string_view( use_string_view ) {}
 
-namespace daw::json_to_cpp {
-	struct config_t final {
-		bool enable_jsonlink = true;
-		std::ostream *header_stream = nullptr;
-		std::ostream *cpp_stream = nullptr;
-		boost::filesystem::path cpp_path;
-		boost::filesystem::path json_path;
-		std::vector<std::string> kv_paths;
-		bool hide_null_only;
-		bool use_string_view;
+	size_t ti_string::type( ) const {
+		return daw::json::json_value_t::index_of<
+		  daw::json::json_value_t::string_t>( );
+	}
 
-		std::ostream &header_file( );
-		std::ostream &cpp_file( );
-	}; // config_t
+	std::string ti_string::name( ) const {
+		if( m_use_string_view ) {
+			return "std::string_view";
+		}
+		return "std::string";
+	}
 
-	void generate_cpp( daw::string_view json_string, config_t &config );
-} // namespace daw::json_to_cpp
+	std::string ti_string::array_member_info( ) const {
+		if( m_use_string_view ) {
+			return "json_string<no_name, std::string_view>";
+		}
+		return "json_string<no_name>";
+	}
+
+	std::string ti_string::json_name( std::string member_name ) const {
+		if( m_use_string_view ) {
+			return "json_string<" + member_name + ", std::string_view>";
+		}
+		return "json_string<" + member_name + ">";
+	}
+
+	type_info_t *ti_string::clone( ) const {
+		return new ti_string( *this );
+	}
+} // namespace daw::json_to_cpp::types

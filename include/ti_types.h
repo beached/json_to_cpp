@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016-2019 Darrell Wright
+// Copyright (c) 2019 Darrell Wright
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files( the "Software" ), to
@@ -22,25 +22,10 @@
 
 #pragma once
 
-#include <boost/filesystem/path.hpp>
-#include <ostream>
-
-#include <daw/daw_string_view.h>
-
-namespace daw::json_to_cpp {
-	struct config_t final {
-		bool enable_jsonlink = true;
-		std::ostream *header_stream = nullptr;
-		std::ostream *cpp_stream = nullptr;
-		boost::filesystem::path cpp_path;
-		boost::filesystem::path json_path;
-		std::vector<std::string> kv_paths;
-		bool hide_null_only;
-		bool use_string_view;
-
-		std::ostream &header_file( );
-		std::ostream &cpp_file( );
-	}; // config_t
-
-	void generate_cpp( daw::string_view json_string, config_t &config );
-} // namespace daw::json_to_cpp
+#include "ti_array.h"
+#include "ti_boolean.h"
+#include "ti_integral.h"
+#include "ti_null.h"
+#include "ti_object.h"
+#include "ti_real.h"
+#include "ti_string.h"

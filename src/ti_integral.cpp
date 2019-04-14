@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016-2019 Darrell Wright
+// Copyright (c) 2019 Darrell Wright
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files( the "Software" ), to
@@ -20,27 +20,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
+#include <cstddef>
+#include <string>
 
-#include <boost/filesystem/path.hpp>
-#include <ostream>
+#include "ti_integral.h"
 
-#include <daw/daw_string_view.h>
+namespace daw::json_to_cpp::types {
+	size_t ti_integral::type( ) const {
+		return daw::json::json_value_t::index_of<
+		  daw::json::json_value_t::integer_t>( );
+	}
 
-namespace daw::json_to_cpp {
-	struct config_t final {
-		bool enable_jsonlink = true;
-		std::ostream *header_stream = nullptr;
-		std::ostream *cpp_stream = nullptr;
-		boost::filesystem::path cpp_path;
-		boost::filesystem::path json_path;
-		std::vector<std::string> kv_paths;
-		bool hide_null_only;
-		bool use_string_view;
+	std::string ti_integral::name( ) const {
+		return "int64_t";
+	}
 
-		std::ostream &header_file( );
-		std::ostream &cpp_file( );
-	}; // config_t
+	std::string ti_integral::array_member_info( ) const {
+		return "json_number<no_name, int64_t>";
+	}
 
-	void generate_cpp( daw::string_view json_string, config_t &config );
-} // namespace daw::json_to_cpp
+	std::string ti_integral::json_name( std::string member_name ) const {
+		return "json_number<" + member_name + ", intmax_t>";
+	}
+
+	type_info_t *ti_integral::clone( ) const {
+		return new ti_integral( *this );
+	}
+} // namespace daw::json_to_cpp::types
