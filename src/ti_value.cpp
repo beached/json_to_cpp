@@ -27,8 +27,6 @@
 #include "type_info.h"
 
 namespace daw::json_to_cpp::types {
-	type_info_t::~type_info_t( ) {}
-
 	std::string ti_value::name( ) const noexcept {
 		return value->name( );
 	}
@@ -67,4 +65,28 @@ namespace daw::json_to_cpp::types {
 
 	ti_value::ti_value( ti_value const &other )
 	  : value( other.value->clone( ) ) {}
+
+	ti_value & ti_value::operator =( ti_value && rhs ) noexcept {
+		if( this != &rhs ) {
+			value = std::exchange( rhs.value, nullptr );
+		}
+		return *this;
+	}
+
+	ti_value & ti_value::operator =( ti_value const & rhs ) {
+		if( this != &rhs ) {
+			auto tmp = rhs;
+			using std::swap;
+			swap( *this, tmp );
+		}
+		return *this;
+	}
+
+	ti_value::ti_value( ti_value && other ) noexcept
+			: value{std::exchange( other.value, nullptr )} {}
+
+	bool ti_value::is_null( ) const {
+		return type( ) ==
+					 daw::json::json_value_t::index_of<json::json_value_t::null_t>( );
+	}
 } // namespace daw::json_to_cpp::types

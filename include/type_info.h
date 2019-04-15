@@ -25,6 +25,7 @@
 #include <string>
 
 #include <daw/daw_ordered_map.h>
+#include <daw/json/daw_json_value_t.h>
 
 #include "ti_value.h"
 
@@ -52,4 +53,3 @@ namespace daw::json_to_cpp::types {
 		virtual std::string array_member_info( ) const = 0;
 	}; // type_info_t
 } // namespace daw::json_to_cpp::types
-

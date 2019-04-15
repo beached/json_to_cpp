@@ -31,13 +31,12 @@ namespace daw::json_to_cpp::types {
 	struct ti_object : type_info_t {
 		std::string object_name;
 
-		ti_object( std::string obj_name );
+		explicit ti_object( std::string obj_name );
 
 		size_t type( ) const override;
 		std::string name( ) const override;
 		type_info_t *clone( ) const override;
-		virtual std::string array_member_info( ) const override;
+		std::string array_member_info( ) const override;
 		std::string json_name( std::string member_name ) const override;
 	};
 } // namespace daw::json_to_cpp::types
-

@@ -26,7 +26,6 @@
 #include <string>
 
 #include <daw/daw_ordered_map.h>
-#include <daw/json/daw_json_value_t.h>
 
 namespace daw::json_to_cpp::types {
 	struct type_info_t;
@@ -37,25 +36,9 @@ namespace daw::json_to_cpp::types {
 		constexpr ti_value( ) noexcept = default;
 		~ti_value( );
 		ti_value( ti_value const &other );
-
-		inline ti_value( ti_value &&other ) noexcept
-		  : value{std::exchange( other.value, nullptr )} {}
-
-		inline ti_value &operator=( ti_value const &rhs ) {
-			if( this != &rhs ) {
-				ti_value tmp{rhs};
-				using std::swap;
-				swap( *this, tmp );
-			}
-			return *this;
-		}
-
-		inline ti_value &operator=( ti_value &&rhs ) {
-			if( this != &rhs ) {
-				value = std::exchange( rhs.value, nullptr );
-			}
-			return *this;
-		}
+		ti_value( ti_value &&other ) noexcept;
+		ti_value &operator=( ti_value const &rhs );
+		ti_value &operator=( ti_value &&rhs ) noexcept;
 
 		template<typename Derived>
 		ti_value( Derived other )
@@ -79,10 +62,7 @@ namespace daw::json_to_cpp::types {
 
 		size_t type( ) const;
 
-		inline bool is_null( ) const {
-			return type( ) ==
-			       daw::json::json_value_t::index_of<json::json_value_t::null_t>( );
-		}
+		bool is_null( ) const;
 	};
 
 	template<typename Derived, typename... Args>

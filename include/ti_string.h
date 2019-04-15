@@ -32,10 +32,10 @@ namespace daw::json_to_cpp::types {
 		bool m_use_string_view;
 
 	public:
-		ti_string( bool use_string_view );
+		explicit ti_string( bool use_string_view );
 		size_t type( ) const override;
 		std::string name( ) const override;
-		virtual std::string array_member_info( ) const override;
+		std::string array_member_info( ) const override;
 		std::string json_name( std::string member_name ) const override;
 		type_info_t *clone( ) const override;
 	};

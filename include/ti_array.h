@@ -36,4 +36,3 @@ namespace daw::json_to_cpp::types {
 		type_info_t *clone( ) const override;
 	};
 } // namespace daw::json_to_cpp::types
-

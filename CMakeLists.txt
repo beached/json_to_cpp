@@ -75,6 +75,7 @@ set( SOURCE_FILES
 	${SOURCE_FOLDER}/ti_object.cpp
 	${SOURCE_FOLDER}/ti_real.cpp
 	${SOURCE_FOLDER}/ti_string.cpp
+	${SOURCE_FOLDER}/type_info.cpp
 )
 
 add_library( json_to_cpp ${HEADER_FILES} ${SOURCE_FILES} )
