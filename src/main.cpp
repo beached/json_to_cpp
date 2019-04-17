@@ -34,16 +34,10 @@
 
 #include <daw/daw_string_view.h>
 
+#include "curl.h"
 #include "json_to_cpp.h"
 
-namespace {
-	std::optional<std::string> download( daw::string_view url,
-	                                     daw::string_view user_agent );
-	bool is_url( daw::string_view path );
-} // namespace
-
 int main( int argc, char **argv ) {
-	using namespace daw::json_to_cpp;
 	static std::string const default_user_agent =
 	  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
 	  "Chrome/54.0.2840.100 Safari/537.36";
@@ -74,7 +68,7 @@ int main( int argc, char **argv ) {
 	    default_user_agent ),
 	  "User agent to use when downloading via URL" );
 
-	boost::program_options::variables_map vm;
+	auto vm = boost::program_options::variables_map{};
 	try {
 		boost::program_options::store(
 		  boost::program_options::parse_command_line( argc, argv, desc ), vm );
@@ -88,7 +82,7 @@ int main( int argc, char **argv ) {
 		std::cerr << desc << std::endl;
 		return EXIT_FAILURE;
 	}
-	config_t config{};
+	auto config = daw::json_to_cpp::config_t{};
 
 	if( !vm.count( "in_file" ) ) {
 		std::cerr << "Missing in_file parameter\n";
@@ -97,20 +91,19 @@ int main( int argc, char **argv ) {
 	config.json_path = vm["in_file"].as<boost::filesystem::path>( );
 
 	if( vm.count( "kv_paths" ) > 0 ) {
-		config.kv_paths	= vm["kv_paths"].as<std::vector<std::string>>( );
+		config.kv_paths = vm["kv_paths"].as<std::vector<std::string>>( );
 	}
 
-	std::string json_str{};
-	if( is_url( config.json_path.string( ) ) ) {
-		auto tmp = download( config.json_path.string( ),
-		                     vm["user_agent"].as<std::string>( ) );
-		if( tmp ) {
-			json_str = *tmp;
-		} else {
+	auto json_str = std::string{};
+	if( daw::curl::is_url( config.json_path.string( ) ) ) {
+		auto tmp = daw::curl::download( config.json_path.string( ),
+		                                vm["user_agent"].as<std::string>( ) );
+		if( !tmp ) {
 			std::cerr << "Could not download json data from '"
 			          << canonical( config.json_path ) << "'\n";
 			exit( EXIT_FAILURE );
 		}
+		json_str = *tmp;
 	} else {
 		if( !exists( config.json_path ) ) {
 			std::cerr << "Could not file file '" << config.json_path << "'\n";
@@ -118,8 +111,7 @@ int main( int argc, char **argv ) {
 			exit( EXIT_FAILURE );
 		}
 
-		std::ifstream in_file;
-		in_file.open( config.json_path.string( ) );
+		auto in_file = std::ifstream{config.json_path.string( )};
 		if( !in_file ) {
 			std::cerr << "Could not open json in_file '"
 			          << canonical( config.json_path ) << "'\n";
@@ -135,8 +127,8 @@ int main( int argc, char **argv ) {
 	config.enable_jsonlink = vm["use_jsonlink"].as<bool>( );
 	config.hide_null_only = vm["hide_null_only"].as<bool>( );
 	config.use_string_view = vm["use_string_view"].as<bool>( );
-	std::ofstream cpp_file;
-	std::ofstream header_file;
+	auto cpp_file = std::ofstream{};
+	auto header_file = std::ofstream{};
 
 	if( vm.count( "cpp_file" ) > 0 ) {
 		bool const allow_overwrite = vm["allow_overwrite"].as<bool>( );
@@ -155,72 +147,7 @@ int main( int argc, char **argv ) {
 		config.cpp_stream = &cpp_file;
 		config.header_stream = &cpp_file;
 	}
-	generate_cpp( json_str, config );
+	daw::json_to_cpp::generate_cpp( json_str, config );
 
 	return EXIT_SUCCESS;
 }
-
-namespace {
-	size_t callback( char const *in, size_t const size, size_t const num,
-	                 std::string *const out ) {
-		assert( out );
-		size_t totalBytes = size * num;
-		out->append( in, totalBytes );
-		return totalBytes;
-	}
-
-	std::optional<std::string> download( daw::string_view url,
-	                                     daw::string_view user_agent ) {
-		struct curl_slist *headers = nullptr;
-		curl_slist_append( headers, "Accept: application/json" );
-		curl_slist_append( headers, "Content-Type: application/json" );
-		curl_slist_append( headers, "charsets: utf-8" );
-
-		CURL *curl = curl_easy_init( );
-		if( !curl ) {
-			return std::nullopt;
-		}
-		curl_easy_setopt( curl, CURLOPT_HTTPHEADER, headers );
-		curl_easy_setopt( curl, CURLOPT_HTTPGET, 1 );
-		curl_easy_setopt( curl, CURLOPT_HTTPHEADER, headers );
-		curl_easy_setopt( curl, CURLOPT_USERAGENT, user_agent.data( ) );
-
-		// Set remote URL.
-		curl_easy_setopt( curl, CURLOPT_URL, url.data( ) );
-
-		// Don't wait forever, time out after 10 seconds.
-		curl_easy_setopt( curl, CURLOPT_TIMEOUT, 15 );
-
-		// Follow HTTP redirects if necessary.
-		curl_easy_setopt( curl, CURLOPT_FOLLOWLOCATION, 1L );
-
-		// Response information.
-		int httpCode = 0;
-		std::string httpData;
-
-		// Hook up data handling function.
-		curl_easy_setopt( curl, CURLOPT_WRITEFUNCTION, callback );
-
-		// Hook up data container ( will be passed as the last parameter to the
-		// callback handling function ).  Can be any pointer type, since it will
-		// internally be passed as a void pointer.
-		curl_easy_setopt( curl, CURLOPT_WRITEDATA, &httpData );
-
-		// Run our HTTP GET command, capture the HTTP response code, and clean up.
-		curl_easy_perform( curl );
-		curl_easy_getinfo( curl, CURLINFO_RESPONSE_CODE, &httpCode );
-		curl_easy_cleanup( curl );
-
-		if( httpCode != 200 ) {
-			std::cerr << "Couldn't GET from " << url << '\n';
-			return std::nullopt;
-		}
-
-		return {std::move( httpData )};
-	}
-
-	bool is_url( daw::string_view path ) {
-		return boost::starts_with( path.data( ), "http://" ) ||
-		       boost::starts_with( path.data( ), "https://" );
-	}
-} // namespace
