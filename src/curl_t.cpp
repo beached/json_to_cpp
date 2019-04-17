@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016-2019 Darrell Wright
+// Copyright (c) 2019 Darrell Wright
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files( the "Software" ), to
@@ -61,17 +61,17 @@ namespace daw::curl {
 			}
 
 			template<typename Opt, typename Param>
-			decltype( auto ) setopt( Opt &&opt, Param &&param ) {
+			CURLcode setopt( Opt &&opt, Param &&param ) {
 				return curl_easy_setopt( m_curl, std::forward<Opt>( opt ),
 				                         std::forward<Param>( param ) );
 			}
 
-			decltype( auto ) perform( ) {
+			CURLcode perform( ) {
 				return curl_easy_perform( m_curl );
 			}
 
 			template<typename Info, typename Arg>
-			decltype( auto ) getinfo( Info &&info, Arg &&arg ) {
+			CURLcode getinfo( Info &&info, Arg &&arg ) {
 				return curl_easy_getinfo( m_curl, std::forward<Info>( info ),
 				                          std::forward<Arg>( arg ) );
 			}
@@ -95,8 +95,8 @@ namespace daw::curl {
 				return m_headers;
 			}
 
-			decltype( auto ) append( char const *str ) {
-				return curl_slist_append( m_headers, str );
+			void append( char const *str ) {
+				m_headers = curl_slist_append( m_headers, str );
 			}
 		};
 	} // namespace
