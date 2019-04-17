@@ -25,28 +25,40 @@
 #include <cstddef>
 #include <string>
 
+#include <daw/cpp_17.h>
+#include <daw/daw_enable_if.h>
 #include <daw/daw_ordered_map.h>
+#include <daw/daw_poly_var.h>
+
+#include "ti_array.h"
+#include "ti_boolean.h"
+#include "ti_integral.h"
+#include "ti_null.h"
+#include "ti_object.h"
+#include "ti_real.h"
+#include "ti_string.h"
+#include "type_info.h"
 
 namespace daw::json_to_cpp::types {
-	struct type_info_t;
+	class ti_value {
+		using ti_value_t =
+		  daw::poly_var<type_info_t, ti_array, ti_boolean, ti_integral, ti_null,
+		                ti_object, ti_real, ti_string>;
 
-	struct ti_value {
-		type_info_t *value = nullptr;
+		ti_value_t m_value;
 
-		constexpr ti_value( ) noexcept = default;
-		~ti_value( );
-		ti_value( ti_value const &other );
-		ti_value( ti_value &&other ) noexcept;
-		ti_value &operator=( ti_value const &rhs );
-		ti_value &operator=( ti_value &&rhs ) noexcept;
+	public:
+		template<typename Derived,
+		         daw::enable_if_t<!std::is_same_v<
+		           ti_value_t, daw::remove_cvref_t<Derived>>> = nullptr>
+		explicit ti_value_t( Derived &&other )
+		  : value( std::forward<Derived>( other ) ) {}
 
-		template<typename Derived>
-		ti_value( Derived other )
-		  : value{new Derived( std::move( other ) )} {}
-
-		template<typename Derived>
-		ti_value &operator=( Derived rhs ) {
-			value = new Derived( std::move( rhs ) );
+		template<typename Derived,
+		         daw::enable_if_t<!std::is_same_v<
+		           ti_value_t, daw::remove_cvref_t<Derived>>> = nullptr>
+		ti_value_t &operator=( Derived &&rhs ) {
+			value = std::forward<Derived>( rhs );
 			return *this;
 		}
 
@@ -54,8 +66,8 @@ namespace daw::json_to_cpp::types {
 		std::string json_name( std::string member_name ) const noexcept;
 		std::string array_member_info( ) const;
 
-		daw::ordered_map<std::string, ti_value> const &children( ) const;
-		daw::ordered_map<std::string, ti_value> &children( );
+		daw::ordered_map<std::string, ti_value_t> const &children( ) const;
+		daw::ordered_map<std::string, ti_value_t> &children( );
 
 		bool &is_optional( ) noexcept;
 		bool const &is_optional( ) const noexcept;
@@ -64,12 +76,4 @@ namespace daw::json_to_cpp::types {
 
 		bool is_null( ) const;
 	};
-
-	template<typename Derived, typename... Args>
-	ti_value create_ti_value( Args &&... args ) {
-		ti_value result{};
-		auto tmp = new Derived( std::forward<Args>( args )... );
-		result.value = std::exchange( tmp, nullptr );
-		return result;
-	}
 } // namespace daw::json_to_cpp::types

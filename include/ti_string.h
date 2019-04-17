@@ -25,18 +25,43 @@
 #include <cstddef>
 #include <string>
 
-#include "type_info.h"
+#include <daw/daw_string_view.h>
 
 namespace daw::json_to_cpp::types {
-	class ti_string : public type_info_t {
+	class ti_string {
+		bool is_optional = false;
 		bool m_use_string_view;
 
 	public:
-		explicit ti_string( bool use_string_view );
-		size_t type( ) const override;
-		std::string name( ) const override;
-		std::string array_member_info( ) const override;
-		std::string json_name( std::string member_name ) const override;
-		type_info_t *clone( ) const override;
+		static constexpr bool is_null = false;
+
+		constexpr explicit ti_string( bool use_string_view ) noexcept
+		  : m_use_string_view( use_string_view ) {}
+
+		static constexpr size_t type( ) noexcept {
+			return daw::json::json_value_t::index_of<
+			  daw::json::json_value_t::string_t>( );
+		}
+
+		constexpr daw::string_view name( ) const noexcept {
+			if( m_use_string_view ) {
+				return "std::string_view";
+			}
+			return "std::string";
+		}
+
+		constexpr daw::string_view array_member_info( ) const noexcept {
+			if( m_use_string_view ) {
+				return "json_string<no_name, std::string_view>";
+			}
+			return "json_string<no_name>";
+		}
+
+		inline std::string json_name( std::string member_name ) const noexcept {
+			if( m_use_string_view ) {
+				return "json_string<" + member_name + ", std::string_view>";
+			}
+			return "json_string<" + member_name + ">";
+		}
 	};
 } // namespace daw::json_to_cpp::types

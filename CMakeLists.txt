@@ -71,9 +71,6 @@ set( SOURCE_FILES
 	${SOURCE_FOLDER}/json_to_cpp.cpp
 	${SOURCE_FOLDER}/ti_value.cpp
 	${SOURCE_FOLDER}/ti_array.cpp
-	${SOURCE_FOLDER}/ti_boolean.cpp
-	${SOURCE_FOLDER}/ti_integral.cpp
-	${SOURCE_FOLDER}/ti_null.cpp
 	${SOURCE_FOLDER}/ti_object.cpp
 	${SOURCE_FOLDER}/ti_real.cpp
 	${SOURCE_FOLDER}/ti_string.cpp

@@ -23,33 +23,48 @@
 #include <cstddef>
 #include <string>
 
+#include <daw/daw_visit.h>
+#include <daw/json/daw_json_value_t.h>
+
 #include "ti_array.h"
 
 namespace daw::json_to_cpp::types {
-	size_t ti_array::type( ) const {
-		if( children.begin( )->second.is_null( ) ) {
-			return daw::json::json_value_t::index_of<
-			  daw::json::json_value_t::null_t>( );
+	namespace {
+		template<typename Variant>
+		constexpr bool name( Variant &&v ) noexcept {
+			return daw::visit_nt( v, []( auto &&item ) { return item.name( ); } );
 		}
-		return daw::json::json_value_t::index_of<
-		  daw::json::json_value_t::array_t>( );
-	}
+
+		template<typename Variant>
+		constexpr bool array_member_info( Variant &&v ) noexcept {
+			return daw::visit_nt(
+			  v, []( auto &&item ) { return item.array_member_info( ); } );
+		}
+	} // namespace
+
 
 	std::string ti_array::name( ) const {
-		return "std::vector<" + children.begin( )->second.name( ) + ">";
+		if( children.empty( ) ) {
+			return "std::vector<" + ti_null::name( ) + ">";
+		}
+		return "std::vector<" + name( children.front( ).second ) + ">";
 	}
 
 	std::string ti_array::json_name( std::string member_name ) const {
+		if( children.empty( ) ) {
+			return "json_array<" + member_name + ", " + name( ) + ", " +
+			       ti_null::array_member_info( ) + ">";
+		}
 		return "json_array<" + member_name + ", " + name( ) + ", " +
-		       children.begin( )->second.array_member_info( ) + ">";
+		       array_member_info( children.front( ).second ) + ">";
 	}
 
 	std::string ti_array::array_member_info( ) const {
+		if( children.empty( ) ) {
+			return "json_array<no_name, " + ti_null::name( ) + ", " +
+			       ti_null::array_member_info( ) + ">";
+		}
 		return "json_array<no_name, " + name( ) + ", " +
-		       children.begin( )->second.array_member_info( ) + ">";
-	}
-
-	type_info_t *ti_array::clone( ) const {
-		return new ti_array( *this );
+		       array_member_info( children.front( ).second ) + ">";
 	}
 } // namespace daw::json_to_cpp::types

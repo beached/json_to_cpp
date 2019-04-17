@@ -25,14 +25,33 @@
 #include <cstddef>
 #include <string>
 
-#include "type_info.h"
+#include <daw/daw_string_view.h>
 
 namespace daw::json_to_cpp::types {
-	struct ti_integral : type_info_t {
-		size_t type( ) const override;
-		std::string name( ) const override;
-		std::string array_member_info( ) const override;
-		std::string json_name( std::string member_name ) const override;
-		type_info_t *clone( ) const override;
+	struct ti_integral {
+		bool is_optional = false;
+
+		constexpr ti_integral( ) noexcept = default;
+
+		static constexpr bool is_null = false;
+
+		static constexpr size_t type( ) noexcept {
+			return daw::json::json_value_t::index_of<
+			  daw::json::json_value_t::integer_t>( );
+		}
+
+		static constexpr daw::string_view name( ) noexcept {
+			return "int64_t";
+		}
+
+		static constexpr daw::string_view array_member_info( ) noexcept {
+			return "json_number<no_name, int64_t>";
+		}
+
+		inline static constexpr std::string
+		json_name( std::string member_name ) noexcept {
+
+			return "json_number<" + member_name + ", intmax_t>";
+		}
 	};
 } // namespace daw::json_to_cpp::types

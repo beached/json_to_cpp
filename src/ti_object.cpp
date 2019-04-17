@@ -23,25 +23,18 @@
 #include <cstddef>
 #include <string>
 
+#include <daw/json/daw_json_value_t.h>
+
 #include "ti_object.h"
 
 namespace daw::json_to_cpp::types {
-	size_t ti_object::type( ) const {
-		return daw::json::json_value_t::index_of<
-		  daw::json::json_value_t::object_t>( );
-	}
 
 	std::string ti_object::name( ) const {
 		return object_name;
 	}
 
 	ti_object::ti_object( std::string obj_name )
-	  : type_info_t{}
-	  , object_name{std::move( obj_name )} {}
-
-	type_info_t *ti_object::clone( ) const {
-		return new ti_object( *this );
-	}
+	  : object_name{std::move( obj_name )} {}
 
 	std::string ti_object::array_member_info( ) const {
 		return "json_class<no_name, " + name( ) + ">";

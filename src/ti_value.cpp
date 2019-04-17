@@ -28,62 +28,36 @@
 
 namespace daw::json_to_cpp::types {
 	std::string ti_value::name( ) const noexcept {
-		return value->name( );
+		return m_value->name( );
 	}
 
 	std::string ti_value::json_name( std::string member_name ) const noexcept {
-		return value->json_name( std::move( member_name ) );
+		return m_value->json_name( std::move( member_name ) );
 	}
 
 	std::string ti_value::array_member_info( ) const {
-		return value->array_member_info( );
+		return m_value->array_member_info( );
 	}
 
 	size_t ti_value::type( ) const {
-		return value->type( );
+		return m_value->type( );
 	}
 
 	daw::ordered_map<std::string, ti_value> const &ti_value::children( ) const {
-		return value->children;
+		return m_value->children;
 	}
 
 	daw::ordered_map<std::string, ti_value> &ti_value::children( ) {
-		return value->children;
+		return m_value->children;
 	}
 
 	bool &ti_value::is_optional( ) noexcept {
-		return value->is_optional;
+		return m_value->is_optional;
 	}
 
 	bool const &ti_value::is_optional( ) const noexcept {
-		return value->is_optional;
+		return m_value->is_optional;
 	}
-
-	ti_value::~ti_value( ) {
-		delete std::exchange( value, nullptr );
-	}
-
-	ti_value::ti_value( ti_value const &other )
-	  : value( other.value->clone( ) ) {}
-
-	ti_value & ti_value::operator =( ti_value && rhs ) noexcept {
-		if( this != &rhs ) {
-			value = std::exchange( rhs.value, nullptr );
-		}
-		return *this;
-	}
-
-	ti_value & ti_value::operator =( ti_value const & rhs ) {
-		if( this != &rhs ) {
-			auto tmp = rhs;
-			using std::swap;
-			swap( *this, tmp );
-		}
-		return *this;
-	}
-
-	ti_value::ti_value( ti_value && other ) noexcept
-			: value{std::exchange( other.value, nullptr )} {}
 
 	bool ti_value::is_null( ) const {
 		return type( ) ==

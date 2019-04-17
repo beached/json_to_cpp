@@ -23,33 +23,29 @@
 #pragma once
 
 #include <string>
+#include <variant>
 
 #include <daw/daw_ordered_map.h>
 #include <daw/json/daw_json_value_t.h>
 
-#include "ti_value.h"
+#include "ti_types.h"
 
 namespace daw::json_to_cpp::types {
 	struct type_info_t {
-		daw::ordered_map<std::string, ti_value> children{};
+
+		daw::ordered_map<std::string, ti_types_t> children{};
 		bool is_optional = false;
 
-		type_info_t( ) = default;
-		type_info_t( type_info_t const & ) = default;
-		type_info_t( type_info_t && ) noexcept = default;
-		type_info_t &operator=( type_info_t const & ) = default;
-		type_info_t &operator=( type_info_t && ) noexcept = default;
-		virtual ~type_info_t( );
+		size_t type( ) const {
 
-		virtual size_t type( ) const = 0;
+		};
 
 		bool is_null( ) const {
 			return this->type( ) ==
 			       json::json_value_t::index_of<json::json_value_t::null_t>( );
 		}
-		virtual std::string name( ) const = 0;
-		virtual std::string json_name( std::string member_name ) const = 0;
-		virtual type_info_t *clone( ) const = 0;
-		virtual std::string array_member_info( ) const = 0;
+		std::string name( ) const = 0;
+		std::string json_name( std::string member_name ) const = 0;
+		std::string array_member_info( ) const = 0;
 	}; // type_info_t
 } // namespace daw::json_to_cpp::types

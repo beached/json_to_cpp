@@ -25,18 +25,35 @@
 #include <cstddef>
 #include <string>
 
-#include "type_info.h"
+#include <daw/daw_ordered_map.h>
+
+#include "ti_array.h"
+#include "ti_boolean.h"
+#include "ti_integral.h"
+#include "ti_null.h"
+#include "ti_real.h"
+#include "ti_string.h"
 
 namespace daw::json_to_cpp::types {
-	struct ti_object : type_info_t {
+	struct ti_object {
+		daw::ordered_map<std::string,
+		                 std::variant<ti_null, ti_array, ti_boolean, ti_integral,
+		                              ti_object, ti_real, ti_string>>
+		  children{};
+		bool is_optional = false;
 		std::string object_name;
 
-		explicit ti_object( std::string obj_name );
+		static constexpr bool is_null = false;
 
-		size_t type( ) const override;
-		std::string name( ) const override;
-		type_info_t *clone( ) const override;
-		std::string array_member_info( ) const override;
-		std::string json_name( std::string member_name ) const override;
+		explicit ti_object( std::string obj_name );
+		
+		static constexpr size_t type( ) {
+			return daw::json::json_value_t::index_of<
+			  daw::json::json_value_t::object_t>( );
+		}
+
+		std::string name( ) const;
+		std::string array_member_info( ) const;
+		std::string json_name( std::string member_name ) const;
 	};
 } // namespace daw::json_to_cpp::types
