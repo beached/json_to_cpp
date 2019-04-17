@@ -36,7 +36,7 @@
 #include "json_to_cpp.h"
 
 int main( int argc, char **argv ) {
-	static std::string const default_user_agent =
+	constexpr daw::string_view default_user_agent =
 	  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
 	  "Chrome/54.0.2840.100 Safari/537.36";
 
@@ -92,33 +92,35 @@ int main( int argc, char **argv ) {
 		config.kv_paths = vm["kv_paths"].as<std::vector<std::string>>( );
 	}
 
-	auto json_str = std::string{};
-	if( daw::curl::is_url( config.json_path.string( ) ) ) {
-		auto tmp = daw::curl::download( config.json_path.string( ),
-		                                vm["user_agent"].as<std::string>( ) );
-		if( !tmp ) {
-			std::cerr << "Could not download json data from '"
-			          << canonical( config.json_path ) << "'\n";
-			exit( EXIT_FAILURE );
-		}
-		json_str = *tmp;
-	} else {
-		if( !exists( config.json_path ) ) {
-			std::cerr << "Could not file file '" << config.json_path << "'\n";
-			std::cerr << "Command line options\n" << desc << std::endl;
-			exit( EXIT_FAILURE );
-		}
+	auto const json_str = [&]( ) {
+		if( daw::curl::is_url( config.json_path.string( ))) {
+			auto tmp = daw::curl::download( config.json_path.string( ),
+																			vm["user_agent"].as<std::string>( ));
+			if( !tmp ) {
+				std::cerr << "Could not download json data from '"
+									<< canonical( config.json_path ) << "'\n";
+				exit( EXIT_FAILURE );
+			}
+			return *tmp;
+		} else {
+			if( !exists( config.json_path )) {
+				std::cerr << "Could not file file '" << config.json_path << "'\n";
+				std::cerr << "Command line options\n" << desc << std::endl;
+				exit( EXIT_FAILURE );
+			}
 
-		auto in_file = std::ifstream{config.json_path.string( )};
-		if( !in_file ) {
-			std::cerr << "Could not open json in_file '"
-			          << canonical( config.json_path ) << "'\n";
-			exit( EXIT_FAILURE );
+			auto in_file = std::ifstream( config.json_path.string( ));
+			if( !in_file ) {
+				std::cerr << "Could not open json in_file '"
+									<< canonical( config.json_path ) << "'\n";
+				exit( EXIT_FAILURE );
+			}
+			auto tmp = std::string( );
+			std::copy( std::istream_iterator<char> {in_file},
+								 std::istream_iterator<char> {}, std::back_inserter( tmp ));
+			return tmp;
 		}
-		std::copy( std::istream_iterator<char>{in_file},
-		           std::istream_iterator<char>{}, std::back_inserter( json_str ) );
-		in_file.close( );
-	}
+	}( );
 
 	config.cpp_stream = &std::cout;
 	config.header_stream = &std::cout;
