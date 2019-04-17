@@ -94,7 +94,7 @@ namespace daw::json_to_cpp {
 			}
 			// Look for characters that are not in the basic standard 5.10
 			// non-digit or digit and escape them
-			std::string new_name{};
+			auto new_name = std::string( );
 			daw::algorithm::transform_it(
 			  name.begin( ), name.end( ), std::back_inserter( new_name ),
 			  []( char c, auto it ) {
@@ -133,7 +133,7 @@ namespace daw::json_to_cpp {
 				return;
 			}
 
-			std::vector<std::pair<std::string, types::ti_value>> diff{};
+			auto diff = std::vector<std::pair<std::string, types::ti_value>>( );
 			for( auto &orig_child : pos->children ) {
 				auto child_pos = std::find_if(
 				  obj.children.begin( ), obj.children.end( ),
@@ -161,7 +161,7 @@ namespace daw::json_to_cpp {
 		types::ti_value merge_array_values( types::ti_value const &a,
 		                                    types::ti_value const &b ) {
 			using daw::json::json_value_t;
-			types::ti_value result{};
+			auto result = types::ti_value( );
 			if( a.is_null( ) ) {
 				result = b;
 				result.is_optional( ) = true;
@@ -336,7 +336,7 @@ namespace daw::json_to_cpp {
 		void generate_json_link_maps( bool definition, config_t &config,
 		                              types::ti_object const &cur_obj ) {
 
-			return generate_json_link_maps( std::integral_constant<int, 3>{},
+			return generate_json_link_maps( std::integral_constant<int, 3>( ),
 			                                definition, config, cur_obj );
 		}
 
@@ -431,7 +431,7 @@ namespace daw::json_to_cpp {
 	}
 
 	void generate_cpp( daw::string_view json_string, config_t &config ) {
-		state_t obj_state{};
+		auto obj_state = state_t( );
 		auto json_obj = ::daw::json::parse_json( json_string );
 		auto obj_info = parse_json_object( json_obj, obj_state, config );
 		generate_code( obj_info, config, obj_state );

@@ -66,7 +66,7 @@ int main( int argc, char **argv ) {
 	    default_user_agent ),
 	  "User agent to use when downloading via URL" );
 
-	auto vm = boost::program_options::variables_map{};
+	auto vm = boost::program_options::variables_map( );
 	try {
 		boost::program_options::store(
 		  boost::program_options::parse_command_line( argc, argv, desc ), vm );
@@ -80,7 +80,7 @@ int main( int argc, char **argv ) {
 		std::cerr << desc << std::endl;
 		return EXIT_FAILURE;
 	}
-	auto config = daw::json_to_cpp::config_t{};
+	auto config = daw::json_to_cpp::config_t( );
 
 	if( !vm.count( "in_file" ) ) {
 		std::cerr << "Missing in_file parameter\n";
@@ -116,8 +116,8 @@ int main( int argc, char **argv ) {
 				exit( EXIT_FAILURE );
 			}
 			auto tmp = std::string( );
-			std::copy( std::istream_iterator<char> {in_file},
-								 std::istream_iterator<char> {}, std::back_inserter( tmp ));
+			std::copy( std::istream_iterator<char>( in_file ),
+								 std::istream_iterator<char>( ), std::back_inserter( tmp ));
 			return tmp;
 		}
 	}( );
@@ -127,8 +127,8 @@ int main( int argc, char **argv ) {
 	config.enable_jsonlink = vm["use_jsonlink"].as<bool>( );
 	config.hide_null_only = vm["hide_null_only"].as<bool>( );
 	config.use_string_view = vm["use_string_view"].as<bool>( );
-	auto cpp_file = std::ofstream{};
-	auto header_file = std::ofstream{};
+	auto cpp_file = std::ofstream( );
+	auto header_file = std::ofstream( );
 
 	if( vm.count( "cpp_file" ) > 0 ) {
 		bool const allow_overwrite = vm["allow_overwrite"].as<bool>( );
