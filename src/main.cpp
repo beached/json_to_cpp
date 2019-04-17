@@ -20,11 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <cstdlib>
-#include <curl/curl.h>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -34,7 +32,7 @@
 
 #include <daw/daw_string_view.h>
 
-#include "curl.h"
+#include "curl_t.h"
 #include "json_to_cpp.h"
 
 int main( int argc, char **argv ) {

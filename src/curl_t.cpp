@@ -29,7 +29,7 @@
 
 #include <daw/daw_string_view.h>
 
-#include "curl.h"
+#include "curl_t.h"
 
 namespace daw::curl {
 	namespace {

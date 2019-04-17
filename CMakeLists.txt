@@ -52,7 +52,7 @@ link_directories( "${CMAKE_BINARY_DIR}/install/lib" )
 link_directories( ${Boost_LIBRARY_DIRS} )
 
 set( HEADER_FILES
-	${HEADER_FOLDER}/curl.h
+	${HEADER_FOLDER}/curl_t.h
 	${HEADER_FOLDER}/json_to_cpp.h
 	${HEADER_FOLDER}/ti_value.h
 	${HEADER_FOLDER}/type_info.h
@@ -67,7 +67,7 @@ set( HEADER_FILES
 )
 
 set( SOURCE_FILES
-	${SOURCE_FOLDER}/curl.cpp
+	${SOURCE_FOLDER}/curl_t.cpp
 	${SOURCE_FOLDER}/json_to_cpp.cpp
 	${SOURCE_FOLDER}/ti_value.cpp
 	${SOURCE_FOLDER}/ti_array.cpp
