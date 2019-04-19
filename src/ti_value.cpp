@@ -23,44 +23,54 @@
 #include <string>
 #include <utility>
 
+#include <daw/daw_visit.h>
+
 #include "ti_value.h"
-#include "type_info.h"
 
 namespace daw::json_to_cpp::types {
 	std::string ti_value::name( ) const noexcept {
-		return m_value->name( );
+		return daw::visit_nt( value,
+		                      []( auto const &item ) { return item.name( ); } );
 	}
 
 	std::string ti_value::json_name( std::string member_name ) const noexcept {
-		return m_value->json_name( std::move( member_name ) );
+		return daw::visit_nt( value, [&member_name]( auto const &item ) {
+			return item.json_name( member_name );
+		} );
 	}
 
 	std::string ti_value::array_member_info( ) const {
-		return m_value->array_member_info( );
+		return daw::visit_nt(
+		  value, []( auto const &item ) { return item.array_member_info( ); } );
 	}
 
-	size_t ti_value::type( ) const {
-		return m_value->type( );
+	daw::ordered_map<std::string, ti_types_t> const &ti_value::children( ) const {
+		return daw::visit_nt(
+		  value,
+		  []( ti_array const &v )
+		    -> daw::ordered_map<std::string, ti_types_t> const & {
+			  return *v.children;
+		  },
+		  []( ti_object const &v )
+		    -> daw::ordered_map<std::string, ti_types_t> const & {
+			  return *v.children;
+		  },
+		  []( ... ) -> daw::ordered_map<std::string, ti_types_t> const & {
+			  std::terminate( );
+		  } );
 	}
 
-	daw::ordered_map<std::string, ti_value> const &ti_value::children( ) const {
-		return m_value->children;
-	}
-
-	daw::ordered_map<std::string, ti_value> &ti_value::children( ) {
-		return m_value->children;
-	}
-
-	bool &ti_value::is_optional( ) noexcept {
-		return m_value->is_optional;
-	}
-
-	bool const &ti_value::is_optional( ) const noexcept {
-		return m_value->is_optional;
-	}
-
-	bool ti_value::is_null( ) const {
-		return type( ) ==
-					 daw::json::json_value_t::index_of<json::json_value_t::null_t>( );
+	daw::ordered_map<std::string, ti_types_t> &ti_value::children( ) {
+		return daw::visit_nt(
+		  value,
+		  []( ti_array &v ) -> daw::ordered_map<std::string, ti_types_t> & {
+			  return *v.children;
+		  },
+		  []( ti_object &v ) -> daw::ordered_map<std::string, ti_types_t> & {
+			  return *v.children;
+		  },
+		  []( ... ) -> daw::ordered_map<std::string, ti_types_t> & {
+			  std::terminate( );
+		  } );
 	}
 } // namespace daw::json_to_cpp::types

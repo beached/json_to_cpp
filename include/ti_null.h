@@ -26,6 +26,7 @@
 #include <string>
 
 #include <daw/daw_string_view.h>
+#include <daw/json/daw_json_value_t.h>
 
 namespace daw::json_to_cpp::types {
 	struct ti_null {
@@ -37,20 +38,18 @@ namespace daw::json_to_cpp::types {
 
 		static constexpr size_t type( ) noexcept {
 			return daw::json::json_value_t::index_of<
-					daw::json::json_value_t::null_t>( );
+			  daw::json::json_value_t::null_t>( );
 		}
 
-		static constexpr daw::string_view name( ) noexcept {
+		static inline std::string name( ) noexcept {
 			return "void*";
 		}
 
-		static constexpr daw::string_view array_member_info( ) noexcept {
+		static inline std::string array_member_info( ) noexcept {
 			return "json_custom<no_name>";
 		}
 
-		inline static constexpr std::string
-		json_name( std::string member_name ) noexcept {
-
+		inline static std::string json_name( std::string member_name ) noexcept {
 			return "json_custom<" + member_name + ">";
 		}
 	};

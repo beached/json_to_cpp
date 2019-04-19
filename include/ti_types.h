@@ -29,9 +29,9 @@
 #include "ti_object.h"
 #include "ti_real.h"
 #include "ti_string.h"
-#include "ti_value.h"
 
 namespace daw::json_to_cpp::types {
 	using ti_types_t = std::variant<ti_null, ti_array, ti_boolean, ti_integral,
 	                                ti_object, ti_real, ti_string>;
 }
+

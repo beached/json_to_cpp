@@ -55,7 +55,6 @@ set( HEADER_FILES
 	${HEADER_FOLDER}/curl_t.h
 	${HEADER_FOLDER}/json_to_cpp.h
 	${HEADER_FOLDER}/ti_value.h
-	${HEADER_FOLDER}/type_info.h
 	${HEADER_FOLDER}/ti_array.h
 	${HEADER_FOLDER}/ti_boolean.h
 	${HEADER_FOLDER}/ti_integral.h
@@ -72,9 +71,6 @@ set( SOURCE_FILES
 	${SOURCE_FOLDER}/ti_value.cpp
 	${SOURCE_FOLDER}/ti_array.cpp
 	${SOURCE_FOLDER}/ti_object.cpp
-	${SOURCE_FOLDER}/ti_real.cpp
-	${SOURCE_FOLDER}/ti_string.cpp
-	${SOURCE_FOLDER}/type_info.cpp
 )
 
 add_library( json_to_cpp ${HEADER_FILES} ${SOURCE_FILES} )

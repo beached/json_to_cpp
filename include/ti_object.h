@@ -23,11 +23,12 @@
 #pragma once
 
 #include <cstddef>
+#include <memory>
 #include <string>
 
 #include <daw/daw_ordered_map.h>
+#include <daw/json/daw_json_value_t.h>
 
-#include "ti_array.h"
 #include "ti_boolean.h"
 #include "ti_integral.h"
 #include "ti_null.h"
@@ -35,19 +36,28 @@
 #include "ti_string.h"
 
 namespace daw::json_to_cpp::types {
+	struct ti_array;
+	struct ti_object;
 	struct ti_object {
-		daw::ordered_map<std::string,
-		                 std::variant<ti_null, ti_array, ti_boolean, ti_integral,
-		                              ti_object, ti_real, ti_string>>
-		  children{};
+		using child_t =
+		  daw::ordered_map<std::string,
+		                   std::variant<ti_null, ti_array, ti_boolean, ti_integral,
+		                                ti_object, ti_real, ti_string>>;
+		std::unique_ptr<child_t> children;
+
 		bool is_optional = false;
 		std::string object_name;
 
 		static constexpr bool is_null = false;
 
 		explicit ti_object( std::string obj_name );
-		
-		static constexpr size_t type( ) {
+		ti_object( ti_object && ) noexcept = default;
+		ti_object &operator=( ti_object && ) noexcept = default;
+		~ti_object( ) = default;
+		ti_object( ti_object const &other ) noexcept;
+		ti_object &operator=( ti_object const &rhs ) noexcept;
+
+		static constexpr size_t type( ) noexcept {
 			return daw::json::json_value_t::index_of<
 			  daw::json::json_value_t::object_t>( );
 		}

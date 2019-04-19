@@ -32,19 +32,31 @@
 #include "ti_boolean.h"
 #include "ti_integral.h"
 #include "ti_null.h"
-#include "ti_object.h"
 #include "ti_real.h"
 #include "ti_string.h"
 
 namespace daw::json_to_cpp::types {
+	struct ti_array;
+	struct ti_object;
 	struct ti_array {
-		daw::ordered_map<std::string,
-		                 std::variant<ti_null, ti_array, ti_boolean, ti_integral,
-		                              ti_object, ti_real, ti_string>>
-		  children{};
-		bool is_optional = false;
+		using child_t =
+		  daw::ordered_map<std::string,
+		                   std::variant<ti_null, ti_array, ti_boolean, ti_integral,
+		                                ti_object, ti_real, ti_string>>;
 
-		static constexpr size_t type( ) {
+		std::unique_ptr<child_t> children;
+
+		bool is_optional = false;
+		static constexpr bool is_null = false;
+
+		ti_array( );
+		ti_array( ti_array && ) noexcept = default;
+		ti_array &operator=( ti_array && ) noexcept = default;
+		~ti_array( ) = default;
+		ti_array( ti_array const &other );
+		ti_array &operator=( ti_array const &rhs );
+
+		static constexpr size_t type( ) noexcept {
 			return daw::json::json_value_t::index_of<
 			  daw::json::json_value_t::array_t>( );
 		}

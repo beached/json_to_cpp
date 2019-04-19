@@ -26,6 +26,7 @@
 #include <daw/json/daw_json_value_t.h>
 
 #include "ti_object.h"
+#include "ti_types.h"
 
 namespace daw::json_to_cpp::types {
 
@@ -34,7 +35,8 @@ namespace daw::json_to_cpp::types {
 	}
 
 	ti_object::ti_object( std::string obj_name )
-	  : object_name{std::move( obj_name )} {}
+	  : children( std::make_unique<child_t>( ) )
+	  , object_name( std::move( obj_name ) ) {}
 
 	std::string ti_object::array_member_info( ) const {
 		return "json_class<no_name, " + name( ) + ">";
@@ -43,4 +45,19 @@ namespace daw::json_to_cpp::types {
 	std::string ti_object::json_name( std::string member_name ) const {
 		return "json_class<" + member_name + ", " + name( ) + ">";
 	}
+
+	ti_object::ti_object( ti_object const &other ) noexcept
+	  : children( std::make_unique<child_t>( *other.children ) )
+	  , is_optional( other.is_optional )
+	  , object_name( other.object_name ) {}
+
+	ti_object &ti_object::operator=( ti_object const &rhs ) noexcept {
+		if( this != &rhs ) {
+			*children = *rhs.children;
+			is_optional = rhs.is_optional;
+			object_name = rhs.object_name;
+		}
+		return *this;
+	}
+
 } // namespace daw::json_to_cpp::types

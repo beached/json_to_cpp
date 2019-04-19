@@ -23,41 +23,31 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 #include <string>
 
 #include <daw/cpp_17.h>
 #include <daw/daw_enable_if.h>
 #include <daw/daw_ordered_map.h>
 #include <daw/daw_poly_var.h>
+#include <daw/daw_visit.h>
 
-#include "ti_array.h"
-#include "ti_boolean.h"
-#include "ti_integral.h"
-#include "ti_null.h"
-#include "ti_object.h"
-#include "ti_real.h"
-#include "ti_string.h"
-#include "type_info.h"
+#include "ti_types.h"
 
 namespace daw::json_to_cpp::types {
-	class ti_value {
-		using ti_value_t =
-		  daw::poly_var<type_info_t, ti_array, ti_boolean, ti_integral, ti_null,
-		                ti_object, ti_real, ti_string>;
+	struct ti_value {
+		ti_types_t value;
 
-		ti_value_t m_value;
-
-	public:
-		template<typename Derived,
-		         daw::enable_if_t<!std::is_same_v<
-		           ti_value_t, daw::remove_cvref_t<Derived>>> = nullptr>
-		explicit ti_value_t( Derived &&other )
+		template<
+		  typename Derived,
+		  daw::enable_if_t<std::is_constructible_v<ti_types_t, Derived>> = nullptr>
+		explicit constexpr ti_value( Derived &&other )
 		  : value( std::forward<Derived>( other ) ) {}
 
-		template<typename Derived,
-		         daw::enable_if_t<!std::is_same_v<
-		           ti_value_t, daw::remove_cvref_t<Derived>>> = nullptr>
-		ti_value_t &operator=( Derived &&rhs ) {
+		template<
+		  typename Derived,
+		  daw::enable_if_t<std::is_constructible_v<ti_types_t, Derived>> = nullptr>
+		constexpr ti_value &operator=( Derived &&rhs ) {
 			value = std::forward<Derived>( rhs );
 			return *this;
 		}
@@ -66,14 +56,34 @@ namespace daw::json_to_cpp::types {
 		std::string json_name( std::string member_name ) const noexcept;
 		std::string array_member_info( ) const;
 
-		daw::ordered_map<std::string, ti_value_t> const &children( ) const;
-		daw::ordered_map<std::string, ti_value_t> &children( );
+		daw::ordered_map<std::string, ti_types_t> const &children( ) const;
+		daw::ordered_map<std::string, ti_types_t> &children( );
 
-		bool &is_optional( ) noexcept;
-		bool const &is_optional( ) const noexcept;
+		template<typename Function>
+		constexpr void on_children( Function ) const {}
 
-		size_t type( ) const;
+		constexpr bool &is_optional( ) noexcept {
+			return daw::visit_nt(
+			  value, []( auto &item ) -> bool & { return item.is_optional; },
+			  []( auto *item ) -> bool & { return item->is_optional; } );
+		}
 
-		bool is_null( ) const;
+		constexpr bool is_optional( ) const noexcept {
+			return daw::visit_nt(
+			  value, []( auto const &item ) { return item.is_optional; },
+			  []( auto const *item ) { return item->is_optional; } );
+		}
+
+		constexpr size_t type( ) const {
+			return daw::visit_nt( value,
+			                      []( auto const &item ) { return item.type( ); },
+			                      []( auto const *item ) { return item->type( ); } );
+		}
+
+		constexpr bool is_null( ) const {
+			return daw::visit_nt( value,
+			                      []( auto const &item ) { return item.is_null; },
+			                      []( auto const *item ) { return item->is_null; } );
+		}
 	};
 } // namespace daw::json_to_cpp::types

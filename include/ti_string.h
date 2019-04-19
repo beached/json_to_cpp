@@ -26,13 +26,14 @@
 #include <string>
 
 #include <daw/daw_string_view.h>
+#include <daw/json/daw_json_value_t.h>
 
 namespace daw::json_to_cpp::types {
 	class ti_string {
-		bool is_optional = false;
 		bool m_use_string_view;
 
 	public:
+		bool is_optional = false;
 		static constexpr bool is_null = false;
 
 		constexpr explicit ti_string( bool use_string_view ) noexcept
@@ -43,14 +44,14 @@ namespace daw::json_to_cpp::types {
 			  daw::json::json_value_t::string_t>( );
 		}
 
-		constexpr daw::string_view name( ) const noexcept {
+		inline std::string name( ) const noexcept {
 			if( m_use_string_view ) {
 				return "std::string_view";
 			}
 			return "std::string";
 		}
 
-		constexpr daw::string_view array_member_info( ) const noexcept {
+		inline std::string array_member_info( ) const noexcept {
 			if( m_use_string_view ) {
 				return "json_string<no_name, std::string_view>";
 			}

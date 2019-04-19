@@ -27,44 +27,78 @@
 #include <daw/json/daw_json_value_t.h>
 
 #include "ti_array.h"
+#include "ti_types.h"
 
 namespace daw::json_to_cpp::types {
 	namespace {
-		template<typename Variant>
-		constexpr bool name( Variant &&v ) noexcept {
-			return daw::visit_nt( v, []( auto &&item ) { return item.name( ); } );
-		}
+		struct name_visitor {
+			template<typename Item>
+			constexpr decltype( auto ) operator( )( Item &&i ) const noexcept {
+				return i.name( );
+			}
+		};
 
 		template<typename Variant>
-		constexpr bool array_member_info( Variant &&v ) noexcept {
-			return daw::visit_nt(
-			  v, []( auto &&item ) { return item.array_member_info( ); } );
+		decltype( auto ) name( Variant &&v ) noexcept {
+			return daw::visit_nt( std::forward<Variant>( v ), name_visitor{} );
+		}
+
+		struct array_member_info_visitor {
+			template<typename Item>
+			constexpr decltype( auto ) operator( )( Item &&i ) const noexcept {
+				return i.array_member_info( );
+			}
+		};
+		template<typename Variant>
+		inline decltype( auto ) array_member_info( Variant &&v ) noexcept {
+			return daw::visit_nt( std::forward<Variant>( v ),
+			                      array_member_info_visitor{} );
 		}
 	} // namespace
 
-
 	std::string ti_array::name( ) const {
-		if( children.empty( ) ) {
+		if( children->empty( ) ) {
 			return "std::vector<" + ti_null::name( ) + ">";
 		}
-		return "std::vector<" + name( children.front( ).second ) + ">";
+		return "std::vector<" +
+		       ::daw::json_to_cpp::types::name( children->front( ).second ) + ">";
 	}
 
 	std::string ti_array::json_name( std::string member_name ) const {
-		if( children.empty( ) ) {
+		if( children->empty( ) ) {
 			return "json_array<" + member_name + ", " + name( ) + ", " +
 			       ti_null::array_member_info( ) + ">";
 		}
 		return "json_array<" + member_name + ", " + name( ) + ", " +
-		       array_member_info( children.front( ).second ) + ">";
+		       ::daw::json_to_cpp::types::array_member_info(
+		         children->front( ).second ) +
+		       ">";
 	}
 
 	std::string ti_array::array_member_info( ) const {
-		if( children.empty( ) ) {
+		if( children->empty( ) ) {
 			return "json_array<no_name, " + ti_null::name( ) + ", " +
 			       ti_null::array_member_info( ) + ">";
 		}
 		return "json_array<no_name, " + name( ) + ", " +
-		       array_member_info( children.front( ).second ) + ">";
+		       ::daw::json_to_cpp::types::array_member_info(
+		         children->front( ).second ) +
+		       ">";
 	}
+
+	ti_array::ti_array( )
+	  : children( std::make_unique<child_t>( ) ) {}
+
+	ti_array::ti_array( const ti_array &other )
+	  : children( std::make_unique<child_t>( *other.children ) )
+	  , is_optional( other.is_optional ) {}
+
+	ti_array &ti_array::operator=( ti_array const &rhs ) {
+		if( this != &rhs ) {
+			*children = *rhs.children;
+			is_optional = rhs.is_optional;
+		}
+		return *this;
+	}
+
 } // namespace daw::json_to_cpp::types

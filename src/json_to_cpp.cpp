@@ -32,7 +32,6 @@
 #include "json_to_cpp.h"
 #include "ti_types.h"
 #include "ti_value.h"
-#include "type_info.h"
 
 namespace daw::json_to_cpp {
 	namespace {
@@ -119,12 +118,81 @@ namespace daw::json_to_cpp {
 			                     } );
 		}
 
-		constexpr bool is_double( size_t t ) noexcept {
-			return t == json::json_value_t::index_of<json::json_value_t::real_t>( );
+		template<typename Variant>
+		constexpr bool is_double( Variant &&v ) noexcept {
+			return std::holds_alternative<types::ti_real>( v );
+		}
+
+		struct is_optional_visitor {
+			bool &operator( )( types::ti_array &item ) const {
+				return item.is_optional;
+			}
+			bool operator( )( types::ti_array const &item ) const {
+				return item.is_optional;
+			}
+
+			bool &operator( )( types::ti_boolean &item ) const {
+				return item.is_optional;
+			}
+			bool operator( )( types::ti_boolean const &item ) const {
+				return item.is_optional;
+			}
+
+			bool &operator( )( types::ti_integral &item ) const {
+				return item.is_optional;
+			}
+			bool operator( )( types::ti_integral const &item ) const {
+				return item.is_optional;
+			}
+
+			bool &operator( )( types::ti_null &item ) const {
+				return item.is_optional;
+			}
+			bool operator( )( types::ti_null const &item ) const {
+				return item.is_optional;
+			}
+
+			bool &operator( )( types::ti_object &item ) const {
+				return item.is_optional;
+			}
+			bool operator( )( types::ti_object const &item ) const {
+				return item.is_optional;
+			}
+
+			bool &operator( )( types::ti_real &item ) const {
+				return item.is_optional;
+			}
+			bool operator( )( types::ti_real const &item ) const {
+				return item.is_optional;
+			}
+
+			bool &operator( )( types::ti_string &item ) const {
+				return item.is_optional;
+			}
+			bool operator( )( types::ti_string const &item ) const {
+				return item.is_optional;
+			}
+		};
+
+		template<typename Variant>
+		constexpr decltype( auto ) is_optional( Variant &&v ) {
+			return daw::visit_nt( std::forward<Variant>( v ), is_optional_visitor{} );
+		}
+
+		template<typename Variant>
+		constexpr decltype( auto ) is_null( Variant &&v ) {
+			return daw::visit_nt( std::forward<Variant>( v ),
+			                      []( auto &&item ) { return item.is_null; } );
+		}
+
+		template<typename Variant>
+		constexpr decltype( auto ) ti_type( Variant &&v ) {
+			return daw::visit_nt( std::forward<Variant>( v ),
+			                      []( auto &&item ) { return item.type; } );
 		}
 
 		void add_or_merge( std::vector<types::ti_object> &obj_info,
-		                   types::ti_object const &obj ) {
+		                   types::ti_object &obj ) {
 			auto pos =
 			  find_by_name( obj_info, {obj.name( ).data( ), obj.name( ).size( )} );
 			if( obj_info.end( ) == pos ) {
@@ -134,80 +202,72 @@ namespace daw::json_to_cpp {
 			}
 
 			auto diff = std::vector<std::pair<std::string, types::ti_value>>( );
-			for( auto &orig_child : pos->children ) {
+			for( auto &orig_child : *pos->children ) {
 				auto child_pos = std::find_if(
-				  obj.children.begin( ), obj.children.end( ),
+				  obj.children->begin( ), obj.children->end( ),
 				  [&]( auto const &v ) { return v.first == orig_child.first; } );
-				if( child_pos == obj.children.end( ) ) {
-					orig_child.second.is_optional( ) = true;
+				if( child_pos == obj.children->end( ) ) {
+					is_optional( orig_child.second ) = true;
 					continue;
 				}
-				if( child_pos->second.is_null( ) ) {
-					orig_child.second.is_optional( ) = true;
-				} else if( orig_child.second.is_null( ) ) {
+				if( is_null( child_pos->second ) ) {
+					is_optional( orig_child.second ) = true;
+				} else if( is_null( orig_child.second ) ) {
 					orig_child.second = child_pos->second;
-					orig_child.second.is_optional( ) = true;
-				} else if( is_double( child_pos->second.type( ) ) ) {
+					is_optional( orig_child.second ) = true;
+				} else if( is_double( child_pos->second ) ) {
 					// Account for when the LHS is an int but the value should actually
 					// be a double
-					auto const is_opt = orig_child.second.is_optional( );
+					auto const is_opt = is_optional( orig_child.second );
 					orig_child.second = orig_child.second;
-					orig_child.second.is_optional( ) =
-					  orig_child.second.is_optional( ) or is_opt;
+					is_optional( orig_child.second ) =
+					  is_optional( orig_child.second ) or is_opt;
 				}
 			}
 		}
 
-		types::ti_value merge_array_values( types::ti_value const &a,
-		                                    types::ti_value const &b ) {
-			using daw::json::json_value_t;
-			auto result = types::ti_value( );
+		types::ti_types_t merge_array_values( types::ti_value a,
+		                                      types::ti_value b ) {
 			if( a.is_null( ) ) {
-				result = b;
-				result.is_optional( ) = true;
-				return result;
+				b.is_optional( ) = true;
+				return b.value;
 			}
-			if( b.is_null( ) ) {
-				result = a;
-				result.is_optional( ) = true;
-			}
-			result = a;
-			result.is_optional( ) = a.is_optional( ) or b.is_optional( );
-			return result;
+			a.is_optional( ) |= b.is_optional( );
+			return a.value;
 		}
 
-		types::ti_value
+		types::ti_types_t
 		parse_json_object( daw::json::json_value_t const &current_item,
 		                   daw::string_view cur_name,
 		                   std::vector<types::ti_object> &obj_info,
 		                   state_t &obj_state, config_t const &config ) {
 
-			using daw::json::json_value_t;
+			using ::daw::json::json_value_t;
+			using namespace ::daw::json_to_cpp::types;
 			if( current_item.is_integer( ) ) {
 				obj_state.has_integrals = true;
-				return types::create_ti_value<types::ti_integral>( );
+				return ti_integral( );
 			}
 			if( current_item.is_real( ) ) {
-				return types::create_ti_value<types::ti_real>( );
+				return ti_real( );
 			}
 			if( current_item.is_boolean( ) ) {
-				return types::create_ti_value<types::ti_boolean>( );
+				return ti_boolean( );
 			}
 			if( current_item.is_string( ) ) {
 				obj_state.has_strings = true;
-				return types::create_ti_value<types::ti_string>(
-				  config.use_string_view );
+				return ti_string( config.use_string_view );
 			}
 			if( current_item.is_null( ) ) {
 				obj_state.has_optionals = true;
-				return types::create_ti_value<types::ti_null>( );
+				return ti_null( );
 			}
 			if( current_item.is_object( ) ) {
-				auto result = types::ti_object{cur_name.to_string( ) + "_t"};
+				auto result = ti_object( cur_name.to_string( ) + "_t" );
 				for( auto const &child : current_item.get_object( ) ) {
 					std::string const child_name =
 					  make_compliant_names( child.first.to_string( ) );
-					result.children[child_name] = parse_json_object(
+					( *result.children )[child_name] = parse_json_object(
 					  child.second, child_name, obj_info, obj_state, config );
 				}
 				add_or_merge( obj_info, result );
@@ -215,12 +275,11 @@ namespace daw::json_to_cpp {
 			}
 			if( current_item.is_array( ) ) {
 				obj_state.has_arrays = true;
-				auto result = types::create_ti_value<types::ti_array>( );
+				auto result = ti_array( );
 				auto arry = current_item.get_array( );
 				auto const child_name = cur_name.to_string( ) + "_element";
 				if( arry.empty( ) ) {
-					result.children( )[child_name] =
-					  types::create_ti_value<types::ti_null>( );
+					( *result.children )[child_name] = ti_null( );
 				} else {
 					auto const last_item = arry.back( );
 					arry.pop_back( );
@@ -228,10 +287,11 @@ namespace daw::json_to_cpp {
 					                                obj_state, config );
 					for( auto const &element : current_item.get_array( ) ) {
 						child = merge_array_values(
-						  child, parse_json_object( element, child_name, obj_info,
-						                            obj_state, config ) );
+						  ti_value( child ),
+						  ti_value( parse_json_object( element, child_name, obj_info,
+						                               obj_state, config ) ) );
 					}
-					result.children( )[child_name] = child;
+					( *result.children )[child_name] = child;
 				}
 				return result;
 			}
@@ -271,8 +331,8 @@ namespace daw::json_to_cpp {
 				config.cpp_file( ) << " auto describe_json_class( "
 				                   << cur_obj.object_name
 				                   << " ) {\n\tusing namespace daw::json;\n";
-				for( auto const &child : cur_obj.children ) {
-					if( config.hide_null_only and child.second.is_null( ) ) {
+				for( auto const &child : *cur_obj.children ) {
+					if( config.hide_null_only and is_null( child.second ) ) {
 						continue;
 					}
 					config.cpp_file( )
@@ -292,8 +352,8 @@ namespace daw::json_to_cpp {
 
 				bool is_first = true;
 
-				for( auto const &child : cur_obj.children ) {
-					if( config.hide_null_only and child.second.is_null( ) ) {
+				for( auto const &child : *cur_obj.children ) {
+					if( config.hide_null_only and is_null( child.second ) ) {
 						continue;
 					}
 					config.cpp_file( ) << "\t\t";
@@ -302,11 +362,12 @@ namespace daw::json_to_cpp {
 					} else {
 						is_first = false;
 					}
-					if( child.second.is_optional( ) ) {
+					if( is_optional( child.second ) ) {
 						config.cpp_file( ) << "json_nullable<";
 					}
-					config.cpp_file( ) << child.second.json_name( child.first );
-					if( child.second.is_optional( ) ) {
+					config.cpp_file( )
+					  << types::ti_value( child.second ).json_name( child.first );
+					if( is_optional( child.second ) ) {
 						config.cpp_file( ) << ">\n";
 					} else {
 						config.cpp_file( ) << '\n';
@@ -318,8 +379,8 @@ namespace daw::json_to_cpp {
 				                   << " const & value ) {\n";
 				config.cpp_file( ) << "\treturn std::forward_as_tuple( ";
 				is_first = true;
-				for( auto const &child : cur_obj.children ) {
-					if( config.hide_null_only and child.second.is_null( ) ) {
+				for( auto const &child : *cur_obj.children ) {
+					if( config.hide_null_only and is_null( child.second ) ) {
 						continue;
 					}
 					if( !is_first ) {
@@ -381,14 +442,14 @@ namespace daw::json_to_cpp {
 			for( auto const &cur_obj : obj_info ) {
 				auto const obj_type = cur_obj.name( );
 				config.header_file( ) << "struct " << obj_type << " {\n";
-				for( auto const &child : cur_obj.children ) {
-					if( config.hide_null_only and child.second.is_null( ) ) {
+				for( auto const &child : *cur_obj.children ) {
+					if( config.hide_null_only and is_null( child.second ) ) {
 						continue;
 					}
 					auto const &member_name = child.first;
-					auto const &member_type = child.second.name( );
+					auto const &member_type = types::ti_value( child.second ).name( );
 					config.header_file( ) << "\t";
-					if( child.second.is_optional( ) ) {
+					if( is_optional( child.second ) ) {
 						config.header_file( ) << "std::optional<" << member_type << ">";
 					} else {
 						config.header_file( ) << member_type;

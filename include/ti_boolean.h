@@ -26,6 +26,7 @@
 #include <string>
 
 #include <daw/daw_string_view.h>
+#include <daw/json/daw_json_value_t.h>
 
 namespace daw::json_to_cpp::types {
 	struct ti_boolean {
@@ -40,11 +41,11 @@ namespace daw::json_to_cpp::types {
 			  daw::json::json_value_t::boolean_t>( );
 		}
 
-		static constexpr daw::string_view name( ) noexcept {
+		static inline std::string name( ) noexcept {
 			return "bool";
 		}
 
-		static constexpr daw::string_view array_member_info( ) noexcept {
+		static inline std::string array_member_info( ) noexcept {
 			return "json_bool<no_name>";
 		}
 

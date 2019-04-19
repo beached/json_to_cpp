@@ -26,6 +26,7 @@
 #include <string>
 
 #include <daw/daw_string_view.h>
+#include <daw/json/daw_json_value_t.h>
 
 namespace daw::json_to_cpp::types {
 	struct ti_integral {
@@ -40,17 +41,15 @@ namespace daw::json_to_cpp::types {
 			  daw::json::json_value_t::integer_t>( );
 		}
 
-		static constexpr daw::string_view name( ) noexcept {
+		static inline std::string name( ) noexcept {
 			return "int64_t";
 		}
 
-		static constexpr daw::string_view array_member_info( ) noexcept {
+		static inline std::string array_member_info( ) noexcept {
 			return "json_number<no_name, int64_t>";
 		}
 
-		inline static constexpr std::string
-		json_name( std::string member_name ) noexcept {
-
+		inline static std::string json_name( std::string member_name ) noexcept {
 			return "json_number<" + member_name + ", intmax_t>";
 		}
 	};
