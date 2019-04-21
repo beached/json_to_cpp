@@ -64,7 +64,7 @@ namespace daw::json_to_cpp::types {
 		       ::daw::json_to_cpp::types::name( children->front( ).second ) + ">";
 	}
 
-	std::string ti_array::json_name( std::string member_name ) const {
+	std::string ti_array::json_name( daw::string_view member_name ) const {
 		if( children->empty( ) ) {
 			return "json_array<" + member_name + ", " + name( ) + ", " +
 			       ti_null::array_member_info( ) + ">";

@@ -52,13 +52,51 @@ namespace daw::json_to_cpp::types {
 			return *this;
 		}
 
-		std::string name( ) const noexcept;
-		std::string json_name( std::string member_name ) const noexcept;
-		std::string array_member_info( ) const;
+		inline std::string name( ) const noexcept {
+			return daw::visit_nt( value,
+			                      []( auto const &item ) { return item.name( ); } );
+		}
 
-		daw::ordered_map<std::string, ti_types_t> const &children( ) const;
-		daw::ordered_map<std::string, ti_types_t> &children( );
+		inline std::string json_name( std::string member_name ) const noexcept {
+			return daw::visit_nt( value, [&member_name]( auto const &item ) {
+				return item.json_name( member_name );
+			} );
+		}
 
+		inline std::string array_member_info( ) const {
+			return daw::visit_nt(
+			  value, []( auto const &item ) { return item.array_member_info( ); } );
+		}
+
+		inline daw::ordered_map<std::string, ti_types_t> const &children( ) const {
+			return daw::visit_nt(
+			  value,
+			  []( ti_array const &v )
+			    -> daw::ordered_map<std::string, ti_types_t> const & {
+				  return *v.children;
+			  },
+			  []( ti_object const &v )
+			    -> daw::ordered_map<std::string, ti_types_t> const & {
+				  return *v.children;
+			  },
+			  []( ... ) -> daw::ordered_map<std::string, ti_types_t> const & {
+				  std::terminate( );
+			  } );
+		}
+
+		inline daw::ordered_map<std::string, ti_types_t> &children( ) {
+			return daw::visit_nt(
+			  value,
+			  []( ti_array &v ) -> daw::ordered_map<std::string, ti_types_t> & {
+				  return *v.children;
+			  },
+			  []( ti_object &v ) -> daw::ordered_map<std::string, ti_types_t> & {
+				  return *v.children;
+			  },
+			  []( ... ) -> daw::ordered_map<std::string, ti_types_t> & {
+				  std::terminate( );
+			  } );
+		}
 		template<typename Function>
 		constexpr void on_children( Function ) const {}
 

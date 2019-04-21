@@ -68,7 +68,6 @@ set( HEADER_FILES
 set( SOURCE_FILES
 	${SOURCE_FOLDER}/curl_t.cpp
 	${SOURCE_FOLDER}/json_to_cpp.cpp
-	${SOURCE_FOLDER}/ti_value.cpp
 	${SOURCE_FOLDER}/ti_array.cpp
 	${SOURCE_FOLDER}/ti_object.cpp
 )

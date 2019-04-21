@@ -64,6 +64,9 @@ namespace daw::json_to_cpp::types {
 
 		std::string name( ) const;
 		std::string array_member_info( ) const;
-		std::string json_name( std::string member_name ) const;
+
+		std::string json_name( daw::string_view member_name ) const {
+			return "json_class<" + member_name + ", " + name( ) + ">";
+		}
 	};
 } // namespace daw::json_to_cpp::types

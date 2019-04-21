@@ -49,7 +49,7 @@ namespace daw::json_to_cpp::types {
 			return "json_number<no_name, int64_t>";
 		}
 
-		inline static std::string json_name( std::string member_name ) noexcept {
+		inline static std::string json_name( daw::string_view member_name ) noexcept {
 			return "json_number<" + member_name + ", intmax_t>";
 		}
 	};

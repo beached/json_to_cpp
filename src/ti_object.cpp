@@ -42,10 +42,6 @@ namespace daw::json_to_cpp::types {
 		return "json_class<no_name, " + name( ) + ">";
 	}
 
-	std::string ti_object::json_name( std::string member_name ) const {
-		return "json_class<" + member_name + ", " + name( ) + ">";
-	}
-
 	ti_object::ti_object( ti_object const &other ) noexcept
 	  : children( std::make_unique<child_t>( *other.children ) )
 	  , is_optional( other.is_optional )

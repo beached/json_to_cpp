@@ -185,12 +185,6 @@ namespace daw::json_to_cpp {
 			                      []( auto &&item ) { return item.is_null; } );
 		}
 
-		template<typename Variant>
-		constexpr decltype( auto ) ti_type( Variant &&v ) {
-			return daw::visit_nt( std::forward<Variant>( v ),
-			                      []( auto &&item ) { return item.type; } );
-		}
-
 		void add_or_merge( std::vector<types::ti_object> &obj_info,
 		                   types::ti_object &obj ) {
 			auto pos =
@@ -271,7 +265,7 @@ namespace daw::json_to_cpp {
 					  child.second, child_name, obj_info, obj_state, config );
 				}
 				add_or_merge( obj_info, result );
-				return result;
+				return {result};
 			}
 			if( current_item.is_array( ) ) {
 				obj_state.has_arrays = true;
@@ -328,7 +322,7 @@ namespace daw::json_to_cpp {
 			}
 			if( !definition ) {
 				using daw::json::json_value_t;
-				config.cpp_file( ) << " auto describe_json_class( "
+				config.cpp_file( ) << "inline auto describe_json_class( "
 				                   << cur_obj.object_name
 				                   << " ) {\n\tusing namespace daw::json;\n";
 				for( auto const &child : *cur_obj.children ) {
@@ -375,7 +369,7 @@ namespace daw::json_to_cpp {
 				}
 				config.cpp_file( ) << ">{};\n}\n\n";
 
-				config.cpp_file( ) << " auto to_json_data( " << cur_obj.object_name
+				config.cpp_file( ) << " inline auto to_json_data( " << cur_obj.object_name
 				                   << " const & value ) {\n";
 				config.cpp_file( ) << "\treturn std::forward_as_tuple( ";
 				is_first = true;
@@ -438,7 +432,7 @@ namespace daw::json_to_cpp {
 		}
 
 		void generate_declarations( std::vector<types::ti_object> const &obj_info,
-		                            config_t &config, state_t const &obj_state ) {
+		                            config_t &config ) {
 			for( auto const &cur_obj : obj_info ) {
 				auto const obj_type = cur_obj.name( );
 				config.header_file( ) << "struct " << obj_type << " {\n";
@@ -465,7 +459,7 @@ namespace daw::json_to_cpp {
 		}
 
 		void generate_definitions( std::vector<types::ti_object> const &obj_info,
-		                           config_t &config, state_t const &obj_state ) {
+		                           config_t &config ) {
 			if( !config.enable_jsonlink ) {
 				return;
 			}
@@ -478,8 +472,8 @@ namespace daw::json_to_cpp {
 		                    config_t &config, state_t const &obj_state ) {
 			generate_includes( true, config, obj_state );
 			generate_includes( false, config, obj_state );
-			generate_declarations( obj_info, config, obj_state );
-			generate_definitions( obj_info, config, obj_state );
+			generate_declarations( obj_info, config );
+			generate_definitions( obj_info, config );
 		}
 	} // namespace
 

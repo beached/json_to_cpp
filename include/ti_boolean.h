@@ -51,7 +51,6 @@ namespace daw::json_to_cpp::types {
 
 		inline static std::string
 		json_name( daw::string_view member_name ) noexcept {
-
 			return "json_bool<" + member_name + ">";
 		}
 	};
