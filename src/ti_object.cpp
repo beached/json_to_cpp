@@ -38,16 +38,20 @@ namespace daw::json_to_cpp::types {
 	  : children( std::make_unique<child_t>( ) )
 	  , object_name( std::move( obj_name ) ) {}
 
-	std::string ti_object::array_member_info( ) const {
-		return "json_class<no_name, " + name( ) + ">";
+	std::string ti_object::json_name( daw::string_view member_name ) const {
+		return "json_class<" + member_name + ", " + name( ) + ">";
 	}
 
-	ti_object::ti_object( ti_object const &other ) noexcept
+	std::string ti_object::array_member_info( ) const {
+		return json_name( "no_name" );
+	}
+
+	ti_object::ti_object( ti_object const &other )
 	  : children( std::make_unique<child_t>( *other.children ) )
 	  , is_optional( other.is_optional )
 	  , object_name( other.object_name ) {}
 
-	ti_object &ti_object::operator=( ti_object const &rhs ) noexcept {
+	ti_object &ti_object::operator=( ti_object const &rhs ) {
 		if( this != &rhs ) {
 			*children = *rhs.children;
 			is_optional = rhs.is_optional;

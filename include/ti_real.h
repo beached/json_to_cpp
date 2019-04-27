@@ -33,13 +33,9 @@ namespace daw::json_to_cpp::types {
 		bool is_optional = false;
 
 		static constexpr bool is_null = false;
+		static constexpr size_t type = impl::ti_real_pos;
 
 		constexpr ti_real( ) noexcept = default;
-
-		static constexpr size_t type( ) noexcept {
-			return daw::json::json_value_t::index_of<
-			  daw::json::json_value_t::real_t>( );
-		}
 
 		static inline std::string name( ) noexcept {
 			return "double";

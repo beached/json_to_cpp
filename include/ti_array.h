@@ -29,6 +29,7 @@
 #include <daw/daw_ordered_map.h>
 #include <daw/daw_string_view.h>
 
+#include "ti_base.h"
 #include "ti_boolean.h"
 #include "ti_integral.h"
 #include "ti_null.h"
@@ -38,16 +39,18 @@
 namespace daw::json_to_cpp::types {
 	struct ti_array;
 	struct ti_object;
+	struct ti_kv;
 	struct ti_array {
-		using child_t =
-		  daw::ordered_map<std::string,
-		                   std::variant<ti_null, ti_array, ti_boolean, ti_integral,
-		                                ti_object, ti_real, ti_string>>;
+		using child_items_t = std::variant<ti_null, ti_array, ti_boolean, ti_integral,
+				ti_object, ti_real, ti_string, ti_kv>;
+
+		using child_t = daw::ordered_map<std::string, child_items_t>;
 
 		std::unique_ptr<child_t> children;
 
 		bool is_optional = false;
 		static constexpr bool is_null = false;
+		static constexpr size_t type = impl::ti_array_pos;
 
 		ti_array( );
 		ti_array( ti_array && ) noexcept = default;
@@ -55,11 +58,6 @@ namespace daw::json_to_cpp::types {
 		~ti_array( ) = default;
 		ti_array( ti_array const &other );
 		ti_array &operator=( ti_array const &rhs );
-
-		static constexpr size_t type( ) noexcept {
-			return daw::json::json_value_t::index_of<
-			  daw::json::json_value_t::array_t>( );
-		}
 
 		std::string name( ) const;
 		std::string json_name( daw::string_view member_name ) const;

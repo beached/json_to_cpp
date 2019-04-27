@@ -76,14 +76,7 @@ namespace daw::json_to_cpp::types {
 	}
 
 	std::string ti_array::array_member_info( ) const {
-		if( children->empty( ) ) {
-			return "json_array<no_name, " + ti_null::name( ) + ", " +
-			       ti_null::array_member_info( ) + ">";
-		}
-		return "json_array<no_name, " + name( ) + ", " +
-		       ::daw::json_to_cpp::types::array_member_info(
-		         children->front( ).second ) +
-		       ">";
+		return json_name( "no_name" );
 	}
 
 	ti_array::ti_array( )

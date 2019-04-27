@@ -35,6 +35,45 @@
 #include "curl_t.h"
 #include "json_to_cpp.h"
 
+namespace {
+	// Paths are specified with dot separators, if the name has a dot in it,
+	// it must be escaped
+	// memberA.memberB.member\.C has 3 parts['memberA', 'memberB', 'member.C']
+	constexpr daw::string_view pop_json_path( daw::string_view &path ) {
+		return path.pop_front( [in_escape = false]( char c ) mutable {
+			if( in_escape ) {
+				in_escape = false;
+				return false;
+			}
+			if( c == '\\' ) {
+				in_escape = true;
+				return false;
+			}
+			return ( c == '.' );
+		} );
+	}
+
+	std::vector<std::vector<std::string>>
+	process_paths( std::vector<std::string> const &paths ) {
+		auto result = std::vector<std::vector<std::string>>( );
+		for( std::string const &p : paths ) {
+			if( p.empty( ) ) {
+				continue;
+			}
+			auto cur_item = std::vector<std::string>( );
+			auto cur_p = daw::string_view( p.data( ), p.size( ) );
+			while( !cur_p.empty( ) ) {
+				auto popped_item = pop_json_path( cur_p );
+				cur_item.emplace_back( popped_item.begin( ), popped_item.end( ) );
+			}
+			if( !cur_item.empty( ) ) {
+				result.push_back( std::move( cur_item ) );
+			}
+		}
+		return result;
+	}
+} // namespace
+
 int main( int argc, char **argv ) {
 	constexpr daw::string_view default_user_agent =
 	  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -89,35 +128,36 @@ int main( int argc, char **argv ) {
 	config.json_path = vm["in_file"].as<boost::filesystem::path>( );
 
 	if( vm.count( "kv_paths" ) > 0 ) {
-		config.kv_paths = vm["kv_paths"].as<std::vector<std::string>>( );
+		config.kv_paths =
+		  process_paths( vm["kv_paths"].as<std::vector<std::string>>( ) );
 	}
 
 	auto const json_str = [&]( ) {
-		if( daw::curl::is_url( config.json_path.string( ))) {
+		if( daw::curl::is_url( config.json_path.string( ) ) ) {
 			auto tmp = daw::curl::download( config.json_path.string( ),
-																			vm["user_agent"].as<std::string>( ));
+			                                vm["user_agent"].as<std::string>( ) );
 			if( !tmp ) {
 				std::cerr << "Could not download json data from '"
-									<< canonical( config.json_path ) << "'\n";
+				          << canonical( config.json_path ) << "'\n";
 				exit( EXIT_FAILURE );
 			}
 			return *tmp;
 		} else {
-			if( !exists( config.json_path )) {
+			if( !exists( config.json_path ) ) {
 				std::cerr << "Could not file file '" << config.json_path << "'\n";
 				std::cerr << "Command line options\n" << desc << std::endl;
 				exit( EXIT_FAILURE );
 			}
 
-			auto in_file = std::ifstream( config.json_path.string( ));
+			auto in_file = std::ifstream( config.json_path.string( ) );
 			if( !in_file ) {
 				std::cerr << "Could not open json in_file '"
-									<< canonical( config.json_path ) << "'\n";
+				          << canonical( config.json_path ) << "'\n";
 				exit( EXIT_FAILURE );
 			}
 			auto tmp = std::string( );
 			std::copy( std::istream_iterator<char>( in_file ),
-								 std::istream_iterator<char>( ), std::back_inserter( tmp ));
+			           std::istream_iterator<char>( ), std::back_inserter( tmp ) );
 			return tmp;
 		}
 	}( );

@@ -56,8 +56,10 @@ set( HEADER_FILES
 	${HEADER_FOLDER}/json_to_cpp.h
 	${HEADER_FOLDER}/ti_value.h
 	${HEADER_FOLDER}/ti_array.h
+	${HEADER_FOLDER}/ti_base.h
 	${HEADER_FOLDER}/ti_boolean.h
 	${HEADER_FOLDER}/ti_integral.h
+	${HEADER_FOLDER}/ti_kv.h
 	${HEADER_FOLDER}/ti_null.h
 	${HEADER_FOLDER}/ti_object.h
 	${HEADER_FOLDER}/ti_real.h
@@ -69,6 +71,7 @@ set( SOURCE_FILES
 	${SOURCE_FOLDER}/curl_t.cpp
 	${SOURCE_FOLDER}/json_to_cpp.cpp
 	${SOURCE_FOLDER}/ti_array.cpp
+	${SOURCE_FOLDER}/ti_kv.cpp
 	${SOURCE_FOLDER}/ti_object.cpp
 )
 

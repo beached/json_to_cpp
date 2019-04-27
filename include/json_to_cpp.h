@@ -34,7 +34,7 @@ namespace daw::json_to_cpp {
 		std::ostream *cpp_stream = nullptr;
 		boost::filesystem::path cpp_path;
 		boost::filesystem::path json_path;
-		std::vector<std::string> kv_paths;
+		std::vector<std::vector<std::string>> kv_paths;
 		bool hide_null_only;
 		bool use_string_view;
 

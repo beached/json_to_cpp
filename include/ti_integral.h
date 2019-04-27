@@ -35,11 +35,7 @@ namespace daw::json_to_cpp::types {
 		constexpr ti_integral( ) noexcept = default;
 
 		static constexpr bool is_null = false;
-
-		static constexpr size_t type( ) noexcept {
-			return daw::json::json_value_t::index_of<
-			  daw::json::json_value_t::integer_t>( );
-		}
+		static constexpr size_t type = impl::ti_integral_pos;
 
 		static inline std::string name( ) noexcept {
 			return "int64_t";

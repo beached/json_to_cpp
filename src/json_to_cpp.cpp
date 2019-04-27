@@ -40,6 +40,8 @@ namespace daw::json_to_cpp {
 			bool has_integrals = false;
 			bool has_optionals = false;
 			bool has_strings = false;
+			bool has_kv = false;
+			std::vector<std::string> path = {};
 		};
 
 		bool is_valid_id_char( char c ) noexcept {
@@ -159,6 +161,14 @@ namespace daw::json_to_cpp {
 				return item.is_optional;
 			}
 
+			bool &operator( )( types::ti_kv &item ) const {
+				return item.is_optional;
+			}
+
+			bool operator( )( types::ti_kv const &item ) const {
+				return item.is_optional;
+			}
+
 			bool &operator( )( types::ti_real &item ) const {
 				return item.is_optional;
 			}
@@ -257,6 +267,8 @@ namespace daw::json_to_cpp {
 				return ti_null( );
 			}
 			if( current_item.is_object( ) ) {
+				obj_state.path.push_back( cur_name );
+				// TODO key_value
 				auto result = ti_object( cur_name.to_string( ) + "_t" );
 				for( auto const &child : current_item.get_object( ) ) {
 					std::string const child_name =
@@ -265,7 +277,7 @@ namespace daw::json_to_cpp {
 					  child.second, child_name, obj_info, obj_state, config );
 				}
 				add_or_merge( obj_info, result );
-				return {result};
+				return result;
 			}
 			if( current_item.is_array( ) ) {
 				obj_state.has_arrays = true;
@@ -369,8 +381,8 @@ namespace daw::json_to_cpp {
 				}
 				config.cpp_file( ) << ">{};\n}\n\n";
 
-				config.cpp_file( ) << " inline auto to_json_data( " << cur_obj.object_name
-				                   << " const & value ) {\n";
+				config.cpp_file( ) << " inline auto to_json_data( "
+				                   << cur_obj.object_name << " const & value ) {\n";
 				config.cpp_file( ) << "\treturn std::forward_as_tuple( ";
 				is_first = true;
 				for( auto const &child : *cur_obj.children ) {

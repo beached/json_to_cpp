@@ -112,16 +112,16 @@ namespace daw::json_to_cpp::types {
 			  []( auto const *item ) { return item->is_optional; } );
 		}
 
-		constexpr size_t type( ) const {
-			return daw::visit_nt( value,
-			                      []( auto const &item ) { return item.type( ); },
-			                      []( auto const *item ) { return item->type( ); } );
+		constexpr size_t type( ) const noexcept {
+			return daw::visit_nt(
+			  value, []( auto const &item ) { return item.type; },
+			  []( auto const *item ) { return item->type; } );
 		}
 
-		constexpr bool is_null( ) const {
-			return daw::visit_nt( value,
-			                      []( auto const &item ) { return item.is_null; },
-			                      []( auto const *item ) { return item->is_null; } );
+		constexpr bool is_null( ) const noexcept {
+			return daw::visit_nt(
+			  value, []( auto const &item ) { return item.is_null; },
+			  []( auto const *item ) { return item->is_null; } );
 		}
 	};
 } // namespace daw::json_to_cpp::types

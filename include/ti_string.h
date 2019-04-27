@@ -35,14 +35,10 @@ namespace daw::json_to_cpp::types {
 	public:
 		bool is_optional = false;
 		static constexpr bool is_null = false;
+		static constexpr size_t type = impl::ti_string_pos;
 
 		constexpr explicit ti_string( bool use_string_view ) noexcept
 		  : m_use_string_view( use_string_view ) {}
-
-		static constexpr size_t type( ) noexcept {
-			return daw::json::json_value_t::index_of<
-			  daw::json::json_value_t::string_t>( );
-		}
 
 		inline std::string name( ) const noexcept {
 			if( m_use_string_view ) {
