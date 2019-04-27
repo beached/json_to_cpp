@@ -271,7 +271,7 @@ namespace daw::json_to_cpp {
 				auto const oe =
 				  daw::on_scope_exit( [&obj_state]( ) { obj_state.path.pop_back( ); } );
 				if( config.path_matches( obj_state.path ) ) {
-					// KV
+					obj_state.has_kv = true;
 					auto result = ti_kv( cur_name.to_string( ) );
 					auto const &children = current_item.get_object( );
 					auto first = children.begin( );
@@ -455,6 +455,9 @@ namespace daw::json_to_cpp {
 				}
 				if( obj_state.has_arrays ) {
 					config.header_file( ) << "#include <vector>\n";
+				}
+				if( obj_state.has_kv ) {
+					config.header_file( ) << "#include <unordered_map>\n";
 				}
 				if( config.enable_jsonlink ) {
 					config.header_file( ) << "#include <daw/json/daw_json_link.h>\n";
