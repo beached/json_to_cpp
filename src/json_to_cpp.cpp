@@ -268,13 +268,24 @@ namespace daw::json_to_cpp {
 			}
 			if( current_item.is_object( ) ) {
 				obj_state.path.push_back( cur_name );
-				auto const oe = daw::on_scope_exit( [&obj_state]( ) {
-					obj_state.path.pop_back( );
-				});
+				auto const oe =
+				  daw::on_scope_exit( [&obj_state]( ) { obj_state.path.pop_back( ); } );
 				if( config.path_matches( obj_state.path ) ) {
 					// KV
 					auto result = ti_kv( cur_name.to_string( ) );
-					(*result.value)["no_name"] = ti_null{};
+					auto const &children = current_item.get_object( );
+					auto first = children.begin( );
+					std::string value_name = cur_name + "_value";
+					( *result.value )[value_name] = parse_json_object(
+					  first->second, value_name, obj_info, obj_state, config );
+					++first;
+					while( first != children.end( ) ) {
+						( *result.value )[value_name] = merge_array_values(
+						  ti_value( ( *result.value )[value_name] ),
+						  ti_value( parse_json_object( first->second, value_name, obj_info,
+						                               obj_state, config ) ) );
+						++first;
+					}
 					return result;
 				} else {
 					auto result = ti_object( cur_name.to_string( ) + "_t" );
