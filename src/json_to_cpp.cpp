@@ -268,9 +268,14 @@ namespace daw::json_to_cpp {
 			}
 			if( current_item.is_object( ) ) {
 				obj_state.path.push_back( cur_name );
+				auto const oe = daw::on_scope_exit( [&obj_state]( ) {
+					obj_state.path.pop_back( );
+				});
 				if( config.path_matches( obj_state.path ) ) {
-					// TODO key_value
-					std::cerr << "Found path!!\n";
+					// KV
+					auto result = ti_kv( cur_name.to_string( ) );
+					(*result.value)["no_name"] = ti_null{};
+					return result;
 				} else {
 					auto result = ti_object( cur_name.to_string( ) + "_t" );
 					for( auto const &child : current_item.get_object( ) ) {
@@ -282,7 +287,6 @@ namespace daw::json_to_cpp {
 					add_or_merge( obj_info, result );
 					return result;
 				}
-				obj_state.path.pop_back( );
 			}
 			if( current_item.is_array( ) ) {
 				obj_state.has_arrays = true;

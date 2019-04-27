@@ -26,7 +26,7 @@
 
 namespace daw::json_to_cpp::types {
 	ti_kv::ti_kv( std::string obj_name )
-	  : value( nullptr )
+	  : value( std::make_unique<child_t>( ) )
 	  , kv_name( obj_name ) {}
 
 	ti_kv::ti_kv( ti_kv const &other )
