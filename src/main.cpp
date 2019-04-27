@@ -67,6 +67,9 @@ namespace {
 				cur_item.emplace_back( popped_item.begin( ), popped_item.end( ) );
 			}
 			if( !cur_item.empty( ) ) {
+				if( cur_item.front( ) != "root_object" ) {
+					cur_item.insert( cur_item.begin( ), "root_object" );
+				}
 				result.push_back( std::move( cur_item ) );
 			}
 		}

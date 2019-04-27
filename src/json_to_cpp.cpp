@@ -268,16 +268,21 @@ namespace daw::json_to_cpp {
 			}
 			if( current_item.is_object( ) ) {
 				obj_state.path.push_back( cur_name );
-				// TODO key_value
-				auto result = ti_object( cur_name.to_string( ) + "_t" );
-				for( auto const &child : current_item.get_object( ) ) {
-					std::string const child_name =
-					  make_compliant_names( child.first.to_string( ) );
-					( *result.children )[child_name] = parse_json_object(
-					  child.second, child_name, obj_info, obj_state, config );
+				if( config.path_matches( obj_state.path ) ) {
+					// TODO key_value
+					std::cerr << "Found path!!\n";
+				} else {
+					auto result = ti_object( cur_name.to_string( ) + "_t" );
+					for( auto const &child : current_item.get_object( ) ) {
+						std::string const child_name =
+						  make_compliant_names( child.first.to_string( ) );
+						( *result.children )[child_name] = parse_json_object(
+						  child.second, child_name, obj_info, obj_state, config );
+					}
+					add_or_merge( obj_info, result );
+					return result;
 				}
-				add_or_merge( obj_info, result );
-				return result;
+				obj_state.path.pop_back( );
 			}
 			if( current_item.is_array( ) ) {
 				obj_state.has_arrays = true;

@@ -40,6 +40,15 @@ namespace daw::json_to_cpp {
 
 		std::ostream &header_file( );
 		std::ostream &cpp_file( );
+
+		inline bool path_matches( std::vector<std::string> const & cur_path ) const {
+			for( auto const & kv_path: kv_paths )	{
+				if( kv_path == cur_path ) {
+					return true;
+				}
+			}
+			return false;
+		}
 	}; // config_t
 
 	void generate_cpp( daw::string_view json_string, config_t &config );
