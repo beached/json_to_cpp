@@ -355,7 +355,7 @@ namespace daw::json_to_cpp {
 			}
 			if( !definition ) {
 				using daw::json::json_value_t;
-				config.cpp_file( ) << "inline auto describe_json_class( "
+				config.cpp_file( ) << "auto describe_json_class( "
 				                   << cur_obj.object_name
 				                   << " ) {\n\tusing namespace daw::json;\n";
 				for( auto const &child : *cur_obj.children ) {
@@ -402,7 +402,7 @@ namespace daw::json_to_cpp {
 				}
 				config.cpp_file( ) << ">{};\n}\n\n";
 
-				config.cpp_file( ) << " inline auto to_json_data( "
+				config.cpp_file( ) << "auto to_json_data( "
 				                   << cur_obj.object_name << " const & value ) {\n";
 				config.cpp_file( ) << "\treturn std::forward_as_tuple( ";
 				is_first = true;
