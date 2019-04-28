@@ -32,6 +32,7 @@ namespace daw::json_to_cpp {
 		bool enable_jsonlink = true;
 		std::ostream *header_stream = nullptr;
 		std::ostream *cpp_stream = nullptr;
+		std::string root_object_name;
 		boost::filesystem::path cpp_path;
 		boost::filesystem::path json_path;
 		std::vector<std::vector<std::string>> kv_paths;

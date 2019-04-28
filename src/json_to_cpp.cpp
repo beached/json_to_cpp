@@ -333,7 +333,7 @@ namespace daw::json_to_cpp {
 			auto result = std::vector<types::ti_object>( );
 
 			if( current_item.is_object( ) ) {
-				parse_json_object( current_item, "root_object", result, obj_state,
+				parse_json_object( current_item, config.root_object_name, result, obj_state,
 				                   config );
 			} else {
 				auto root_obj_member =
@@ -341,7 +341,7 @@ namespace daw::json_to_cpp {
 				auto root_object = json_object_value( );
 				root_object.members_v.push_back( std::move( root_obj_member ) );
 				auto root_value = json_value_t( std::move( root_object ) );
-				parse_json_object( root_value, "root_object", result, obj_state,
+				parse_json_object( root_value, config.root_object_name, result, obj_state,
 				                   config );
 			}
 			return result;

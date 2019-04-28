@@ -103,6 +103,10 @@ int main( int argc, char **argv ) {
 	  boost::program_options::value<bool>( )->default_value( false ),
 	  "Use std::string_view instead of std::string.  Must ensure buffer is "
 	  "available after parsing when this is used" )(
+	  "root_object",
+	  boost::program_options::value<std::string>( )->default_value(
+	    "root_object" ),
+	  "Name of the nameless root object" )(
 	  "user_agent",
 	  boost::program_options::value<std::string>( )->default_value(
 	    default_user_agent ),
@@ -129,6 +133,7 @@ int main( int argc, char **argv ) {
 		exit( EXIT_FAILURE );
 	}
 	config.json_path = vm["in_file"].as<boost::filesystem::path>( );
+	config.root_object_name = vm["root_object"].as<std::string>( );
 
 	if( vm.count( "kv_paths" ) > 0 ) {
 		config.kv_paths =

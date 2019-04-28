@@ -34,12 +34,19 @@ Command line options
 Options:
   --help                                print option descriptions
   --in_file arg                         json source file path or url
+  --kv_paths arg                        Specify class members that are key
+                                        value pairs
   --use_jsonlink arg (=1)               Use JsonLink serializaion/deserializati
                                         on
   --output_file arg                     output goes to c++ header file.
   --allow_overwrite arg (=0)            Overwrite existing output files
   --hide_null_only arg (=1)             Do not output json entries that are
                                         only ever null
+  --use_string_view arg (=0)            Use std::string_view instead of
+                                        std::string.  Must ensure buffer is
+                                        available after parsing when this is
+                                        used
+  --root_object arg (=root_object)      Name of the nameless root object
   --user_agent arg (=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.100 Safari/537.36)
                                         User agent to use when downloading via
                                         URL
