@@ -194,7 +194,6 @@ namespace daw::json_to_cpp {
 			return daw::visit_nt( std::forward<Variant>( v ),
 			                      []( auto &&item ) { return item.is_null; } );
 		}
-
 		void add_or_merge( std::vector<types::ti_object> &obj_info,
 		                   types::ti_object &obj ) {
 			auto pos =
@@ -271,11 +270,12 @@ namespace daw::json_to_cpp {
 				auto const oe =
 				  daw::on_scope_exit( [&obj_state]( ) { obj_state.path.pop_back( ); } );
 				if( config.path_matches( obj_state.path ) ) {
+					// KV Map
 					obj_state.has_kv = true;
 					auto result = ti_kv( cur_name.to_string( ) );
 					auto const &children = current_item.get_object( );
 					auto first = children.begin( );
-					std::string value_name = cur_name + "_value";
+					auto value_name = make_compliant_names( cur_name + "_value" );
 					( *result.value )[value_name] = parse_json_object(
 					  first->second, value_name, obj_info, obj_state, config );
 					++first;
@@ -288,6 +288,7 @@ namespace daw::json_to_cpp {
 					}
 					return result;
 				} else {
+					// Object
 					auto result = ti_object( cur_name.to_string( ) + "_t" );
 					for( auto const &child : current_item.get_object( ) ) {
 						std::string const child_name =
