@@ -46,7 +46,7 @@ namespace daw::json_to_cpp::types {
 		}
 
 		inline static std::string json_name( daw::string_view member_name ) noexcept {
-			return "json_number<" + member_name + ", intmax_t>";
+			return "json_number<" + member_name + ", int64_t>";
 		}
 	};
 } // namespace daw::json_to_cpp::types

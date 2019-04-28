@@ -337,7 +337,7 @@ namespace daw::json_to_cpp {
 				                   config );
 			} else {
 				auto root_obj_member =
-				  ::daw::json::make_object_value_item( "root_obj", current_item );
+				  ::daw::json::make_object_value_item( config.root_object_name.c_str( ), current_item );
 				auto root_object = json_object_value( );
 				root_object.members_v.push_back( std::move( root_obj_member ) );
 				auto root_value = json_value_t( std::move( root_object ) );
@@ -440,7 +440,9 @@ namespace daw::json_to_cpp {
 			}
 			if( !definition ) {
 				config.header_file( ) << "#pragma once\n\n";
-				config.header_file( ) << "#include <tuple>\n";
+				if( config.enable_jsonlink ) {
+					config.header_file( ) << "#include <tuple>\n";
+				}
 				if( obj_state.has_optionals ) {
 					config.header_file( ) << "#include <optional>\n";
 				}
