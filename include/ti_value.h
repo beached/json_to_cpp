@@ -57,9 +57,9 @@ namespace daw::json_to_cpp::types {
 			                      []( auto const &item ) { return item.name( ); } );
 		}
 
-		inline std::string json_name( std::string member_name ) const noexcept {
-			return daw::visit_nt( value, [&member_name]( auto const &item ) {
-				return item.json_name( member_name );
+		inline std::string json_name( std::string member_name, bool use_cpp20 ) const noexcept {
+			return daw::visit_nt( value, [&member_name, use_cpp20]( auto const &item ) {
+				return item.json_name( member_name, use_cpp20 );
 			} );
 		}
 

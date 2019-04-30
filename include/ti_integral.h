@@ -28,6 +28,8 @@
 #include <daw/daw_string_view.h>
 #include <daw/json/daw_json_value_t.h>
 
+#include "ti_base.h"
+
 namespace daw::json_to_cpp::types {
 	struct ti_integral {
 		bool is_optional = false;
@@ -45,8 +47,8 @@ namespace daw::json_to_cpp::types {
 			return "json_number<no_name, int64_t>";
 		}
 
-		inline static std::string json_name( daw::string_view member_name ) noexcept {
-			return "json_number<" + member_name + ", int64_t>";
+		inline static std::string json_name( daw::string_view member_name, bool use_cpp20 ) noexcept {
+			return "json_number<" + impl::format_member_name( member_name, use_cpp20 ) + ", int64_t>";
 		}
 	};
 } // namespace daw::json_to_cpp::types

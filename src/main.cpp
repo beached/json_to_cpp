@@ -91,6 +91,8 @@ int main( int argc, char **argv ) {
 	  "use_jsonlink",
 	  boost::program_options::value<bool>( )->default_value( true ),
 	  "Use JsonLink serializaion/deserialization" )(
+	  "has_cpp20", boost::program_options::value<bool>( )->default_value( false ),
+	  "Enables use of non-type class template arguments" )(
 	  "output_file", boost::program_options::value<boost::filesystem::path>( ),
 	  "output goes to c++ header file." )(
 	  "allow_overwrite",
@@ -175,6 +177,7 @@ int main( int argc, char **argv ) {
 	config.enable_jsonlink = vm["use_jsonlink"].as<bool>( );
 	config.hide_null_only = vm["hide_null_only"].as<bool>( );
 	config.use_string_view = vm["use_string_view"].as<bool>( );
+	config.has_cpp20 = vm["has_cpp20"].as<bool>( );
 	auto cpp_file = std::ofstream( );
 	auto header_file = std::ofstream( );
 

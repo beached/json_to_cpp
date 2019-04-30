@@ -27,6 +27,7 @@
 #include <daw/json/daw_json_value_t.h>
 
 #include "ti_array.h"
+#include "ti_base.h"
 #include "ti_types.h"
 
 namespace daw::json_to_cpp::types {
@@ -64,19 +65,22 @@ namespace daw::json_to_cpp::types {
 		       ::daw::json_to_cpp::types::name( children->front( ).second ) + ">";
 	}
 
-	std::string ti_array::json_name( daw::string_view member_name ) const {
+	std::string ti_array::json_name( daw::string_view member_name,
+	                                 bool use_cpp20 ) const {
 		if( children->empty( ) ) {
-			return "json_array<" + member_name + ", " + name( ) + ", " +
-			       ti_null::array_member_info( ) + ">";
+			return "json_array<" +
+			       impl::format_member_name( member_name, use_cpp20 ) + ", " +
+			       name( ) + ", " + ti_null::array_member_info( ) + ">";
 		}
-		return "json_array<" + member_name + ", " + name( ) + ", " +
+		return "json_array<" + impl::format_member_name( member_name, use_cpp20 ) +
+		       ", " + name( ) + ", " +
 		       ::daw::json_to_cpp::types::array_member_info(
 		         children->front( ).second ) +
 		       ">";
 	}
 
 	std::string ti_array::array_member_info( ) const {
-		return json_name( "no_name" );
+		return json_name( "no_name", false );
 	}
 
 	ti_array::ti_array( )

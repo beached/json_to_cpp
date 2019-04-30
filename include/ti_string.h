@@ -28,6 +28,8 @@
 #include <daw/daw_string_view.h>
 #include <daw/json/daw_json_value_t.h>
 
+#include "ti_base.h"
+
 namespace daw::json_to_cpp::types {
 	class ti_string {
 		bool m_use_string_view;
@@ -54,11 +56,11 @@ namespace daw::json_to_cpp::types {
 			return "json_string<no_name>";
 		}
 
-		inline std::string json_name( daw::string_view member_name ) const noexcept {
+		inline std::string json_name( daw::string_view member_name, bool use_cpp20 ) const noexcept {
 			if( m_use_string_view ) {
-				return "json_string<" + member_name + ", std::string_view>";
+				return "json_string<" + impl::format_member_name( member_name, use_cpp20 ) + ", std::string_view>";
 			}
-			return "json_string<" + member_name + ">";
+			return "json_string<" + impl::format_member_name( member_name, use_cpp20 ) + ">";
 		}
 	};
 } // namespace daw::json_to_cpp::types

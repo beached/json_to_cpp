@@ -27,6 +27,7 @@
 #include <variant>
 
 #include <daw/cpp_17.h>
+#include <daw/daw_string_view.h>
 
 namespace daw::json_to_cpp::types::impl {
 	inline constexpr size_t ti_null_pos = 0;
@@ -61,5 +62,12 @@ namespace daw::json_to_cpp::types::impl {
 			return false;
 		}
 		return ( std::is_same_v<Args0, Args1> and ... );
+	}
+
+	inline std::string format_member_name( daw::string_view name, bool use_cpp20 ) {
+		if( use_cpp20 ) {
+			return "\"" + name + "\"";
+		}
+		return name;
 	}
 } // namespace daw::json_to_cpp::types::impl

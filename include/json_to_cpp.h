@@ -38,6 +38,7 @@ namespace daw::json_to_cpp {
 		std::vector<std::vector<std::string>> kv_paths;
 		bool hide_null_only;
 		bool use_string_view;
+		bool has_cpp20;
 
 		std::ostream &header_file( );
 		std::ostream &cpp_file( );

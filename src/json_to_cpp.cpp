@@ -358,20 +358,22 @@ namespace daw::json_to_cpp {
 				config.cpp_file( ) << "auto describe_json_class( "
 				                   << cur_obj.object_name
 				                   << " ) {\n\tusing namespace daw::json;\n";
-				for( auto const &child : *cur_obj.children ) {
-					if( config.hide_null_only and is_null( child.second ) ) {
-						continue;
-					}
-					config.cpp_file( )
-					  << "\tstatic constexpr char const " << child.first << "[] = \"";
-					if( daw::string_view( child.first.data( ), child.first.size( ) )
-					      .starts_with( "_json" ) ) {
+				if( !config.has_cpp20 ) {
+					for( auto const & child : *cur_obj.children ) {
+						if( config.hide_null_only and is_null( child.second )) {
+							continue;
+						}
 						config.cpp_file( )
-						  << daw::string_view( child.first.data( ), child.first.size( ) )
-						       .substr( 5 )
-						  << "\";\n";
-					} else {
-						config.cpp_file( ) << child.first << "\";\n";
+								<< "\tstatic constexpr char const " << child.first << "[] = \"";
+						if( daw::string_view( child.first.data( ), child.first.size( ))
+								.starts_with( "_json" )) {
+							config.cpp_file( )
+									<< daw::string_view( child.first.data( ), child.first.size( ))
+											.substr( 5 )
+									<< "\";\n";
+						} else {
+							config.cpp_file( ) << child.first << "\";\n";
+						}
 					}
 				}
 
@@ -393,14 +395,14 @@ namespace daw::json_to_cpp {
 						config.cpp_file( ) << "json_nullable<";
 					}
 					config.cpp_file( )
-					  << types::ti_value( child.second ).json_name( child.first );
+					  << types::ti_value( child.second ).json_name( child.first, config.has_cpp20 );
 					if( is_optional( child.second ) ) {
 						config.cpp_file( ) << ">\n";
 					} else {
 						config.cpp_file( ) << '\n';
 					}
 				}
-				config.cpp_file( ) << ">{};\n}\n\n";
+				config.cpp_file( ) << "\t>{};\n}\n\n";
 
 				config.cpp_file( ) << "auto to_json_data( "
 				                   << cur_obj.object_name << " const & value ) {\n";
