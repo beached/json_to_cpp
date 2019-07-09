@@ -62,7 +62,7 @@ namespace daw::json_to_cpp::types {
 		ti_object &operator=( ti_object const &rhs );
 
 		std::string name( ) const;
-		std::string json_name( daw::string_view member_name, bool use_cpp20 ) const;
+		std::string json_name( daw::string_view member_name, bool use_cpp20, daw::string_view parent_name ) const;
 		std::string array_member_info( ) const;
 	};
 } // namespace daw::json_to_cpp::types

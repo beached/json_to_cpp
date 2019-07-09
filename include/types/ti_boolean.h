@@ -28,27 +28,27 @@
 #include <daw/daw_string_view.h>
 #include <daw/json/daw_json_value_t.h>
 
-#include "ti_base.h"
-
 namespace daw::json_to_cpp::types {
-	struct ti_null {
+	struct ti_boolean {
 		bool is_optional = false;
 
-		constexpr ti_null( ) noexcept = default;
+		constexpr ti_boolean( ) noexcept = default;
 
-		static constexpr bool is_null = true;
-		static constexpr size_t type = impl::ti_null_pos;
+		static constexpr bool is_null = false;
+		static constexpr size_t type = impl::ti_boolean_pos;
 
 		static inline std::string name( ) noexcept {
-			return "void*";
+			return "bool";
 		}
 
 		static inline std::string array_member_info( ) noexcept {
-			return "json_custom<no_name>";
+			return "json_bool<no_name>";
 		}
 
-		static inline std::string json_name( daw::string_view member_name, bool use_cpp20 ) noexcept {
-			return "json_custom<" + impl::format_member_name( member_name, use_cpp20 ) + ">";
+		inline static std::string json_name( daw::string_view member_name,
+		                                     bool use_cpp20, daw::string_view parent_name ) noexcept {
+			return "json_bool<" + impl::format_member_name( member_name, use_cpp20, parent_name ) +
+			       ">";
 		}
 	};
 } // namespace daw::json_to_cpp::types

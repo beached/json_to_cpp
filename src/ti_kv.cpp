@@ -20,10 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "ti_base.h"
-#include "ti_kv.h"
-#include "ti_array.h"
-#include "ti_object.h"
+#include "types/ti_kv.h"
+#include "types/ti_array.h"
+#include "types/ti_base.h"
+#include "types/ti_object.h"
 
 namespace daw::json_to_cpp::types {
 	ti_kv::ti_kv( std::string obj_name )
@@ -57,11 +57,14 @@ namespace daw::json_to_cpp::types {
 	}
 
 	std::string ti_kv::array_member_info( ) const {
-		return json_name( "no_name", false );
+		return json_name( "no_name", false, "" );
 	}
 
-	std::string ti_kv::json_name( daw::string_view member_name, bool use_cpp20 ) const {
-		std::string result = "json_key_value<" + impl::format_member_name( member_name, use_cpp20 ) + ", " + name( ) + ", ";
+	std::string ti_kv::json_name( daw::string_view member_name,
+	                              bool use_cpp20, daw::string_view parent_name ) const {
+		std::string result = "json_key_value<" +
+		                     impl::format_member_name( member_name, use_cpp20, parent_name ) +
+		                     ", " + name( ) + ", ";
 		if( value ) {
 			result += daw::visit_nt(
 			  value->front( ).second,

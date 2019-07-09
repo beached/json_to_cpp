@@ -64,10 +64,14 @@ namespace daw::json_to_cpp::types::impl {
 		return ( std::is_same_v<Args0, Args1> and ... );
 	}
 
-	inline std::string format_member_name( daw::string_view name, bool use_cpp20 ) {
+	inline std::string format_member_name( daw::string_view name, bool use_cpp20, daw::string_view parent_name ) {
 		if( use_cpp20 ) {
 			return "\"" + name + "\"";
 		}
-		return name;
+		if( parent_name.empty( ) ) {
+			return name;
+		}
+		std::string result = "symbols_" + parent_name.to_string( ) + "::" + name;
+		return result;
 	}
 } // namespace daw::json_to_cpp::types::impl

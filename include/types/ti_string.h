@@ -24,43 +24,43 @@
 
 #include <cstddef>
 #include <string>
-#include <variant>
 
-#include <daw/daw_ordered_map.h>
 #include <daw/daw_string_view.h>
+#include <daw/json/daw_json_value_t.h>
 
 #include "ti_base.h"
-#include "ti_boolean.h"
-#include "ti_integral.h"
-#include "ti_null.h"
-#include "ti_real.h"
-#include "ti_string.h"
 
 namespace daw::json_to_cpp::types {
-	struct ti_array;
-	struct ti_object;
-	struct ti_kv;
-	struct ti_array {
-		using child_items_t = std::variant<ti_null, ti_array, ti_boolean, ti_integral,
-				ti_object, ti_real, ti_string, ti_kv>;
+	class ti_string {
+		bool m_use_string_view;
 
-		using child_t = daw::ordered_map<std::string, child_items_t>;
-
-		std::unique_ptr<child_t> children;
-
+	public:
 		bool is_optional = false;
 		static constexpr bool is_null = false;
-		static constexpr size_t type = impl::ti_array_pos;
+		static constexpr size_t type = impl::ti_string_pos;
 
-		ti_array( );
-		ti_array( ti_array && ) noexcept = default;
-		ti_array &operator=( ti_array && ) noexcept = default;
-		~ti_array( ) = default;
-		ti_array( ti_array const &other );
-		ti_array &operator=( ti_array const &rhs );
+		constexpr explicit ti_string( bool use_string_view ) noexcept
+		  : m_use_string_view( use_string_view ) {}
 
-		std::string name( ) const;
-		std::string json_name( daw::string_view member_name, bool use_cpp20 ) const;
-		std::string array_member_info( ) const;
+		inline std::string name( ) const noexcept {
+			if( m_use_string_view ) {
+				return "std::string_view";
+			}
+			return "std::string";
+		}
+
+		inline std::string array_member_info( ) const noexcept {
+			if( m_use_string_view ) {
+				return "json_string<no_name, std::string_view>";
+			}
+			return "json_string<no_name>";
+		}
+
+		inline std::string json_name( daw::string_view member_name, bool use_cpp20, daw::string_view parent_name ) const noexcept {
+			if( m_use_string_view ) {
+				return "json_string<" + impl::format_member_name( member_name, use_cpp20, parent_name ) + ", std::string_view>";
+			}
+			return "json_string<" + impl::format_member_name( member_name, use_cpp20, parent_name ) + ">";
+		}
 	};
 } // namespace daw::json_to_cpp::types

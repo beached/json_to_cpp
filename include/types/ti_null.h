@@ -31,36 +31,24 @@
 #include "ti_base.h"
 
 namespace daw::json_to_cpp::types {
-	class ti_string {
-		bool m_use_string_view;
-
-	public:
+	struct ti_null {
 		bool is_optional = false;
-		static constexpr bool is_null = false;
-		static constexpr size_t type = impl::ti_string_pos;
 
-		constexpr explicit ti_string( bool use_string_view ) noexcept
-		  : m_use_string_view( use_string_view ) {}
+		constexpr ti_null( ) noexcept = default;
 
-		inline std::string name( ) const noexcept {
-			if( m_use_string_view ) {
-				return "std::string_view";
-			}
-			return "std::string";
+		static constexpr bool is_null = true;
+		static constexpr size_t type = impl::ti_null_pos;
+
+		static inline std::string name( ) noexcept {
+			return "void*";
 		}
 
-		inline std::string array_member_info( ) const noexcept {
-			if( m_use_string_view ) {
-				return "json_string<no_name, std::string_view>";
-			}
-			return "json_string<no_name>";
+		static inline std::string array_member_info( ) noexcept {
+			return "json_custom<no_name>";
 		}
 
-		inline std::string json_name( daw::string_view member_name, bool use_cpp20 ) const noexcept {
-			if( m_use_string_view ) {
-				return "json_string<" + impl::format_member_name( member_name, use_cpp20 ) + ", std::string_view>";
-			}
-			return "json_string<" + impl::format_member_name( member_name, use_cpp20 ) + ">";
+		static inline std::string json_name( daw::string_view member_name, bool use_cpp20, daw::string_view parent_name ) noexcept {
+			return "json_custom<" + impl::format_member_name( member_name, use_cpp20, parent_name ) + ">";
 		}
 	};
 } // namespace daw::json_to_cpp::types

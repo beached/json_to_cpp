@@ -1,6 +1,6 @@
 // The MIT License (MIT)
 //
-// Copyright (c) 2016-2019 Darrell Wright
+// Copyright (c) 2019 Darrell Wright
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files( the "Software" ), to
@@ -22,13 +22,36 @@
 
 #pragma once
 
-#include <boost/filesystem/path.hpp>
-#include <ostream>
-
-#include <daw/daw_string_view.h>
-
-#include "json_to_cpp_config.h"
+#include <iostream>
+#include <string>
+#include <vector>
 
 namespace daw::json_to_cpp {
-	void generate_cpp( daw::string_view json_string, config_t &config );
+	struct config_t final {
+		bool enable_jsonlink = true;
+		std::ostream *header_stream = nullptr;
+		std::ostream *cpp_stream = nullptr;
+		std::string root_object_name;
+		std::string type_prefix{};
+		std::string type_suffix{};
+		std::optional<std::string> path{};
+		boost::filesystem::path cpp_path;
+		boost::filesystem::path json_path;
+		std::vector<std::vector<std::string>> kv_paths;
+		bool hide_null_only;
+		bool use_string_view;
+		bool has_cpp20;
+
+		std::ostream &header_file( );
+		std::ostream &cpp_file( );
+
+		inline bool path_matches( std::vector<std::string> const &cur_path ) const {
+			for( auto const &kv_path : kv_paths ) {
+				if( kv_path == cur_path ) {
+					return true;
+				}
+			}
+			return false;
+		}
+	};
 } // namespace daw::json_to_cpp

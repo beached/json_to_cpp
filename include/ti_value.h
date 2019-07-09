@@ -32,7 +32,7 @@
 #include <daw/daw_poly_var.h>
 #include <daw/daw_visit.h>
 
-#include "ti_types.h"
+#include "types/ti_types.h"
 
 namespace daw::json_to_cpp::types {
 	struct ti_value {
@@ -57,10 +57,12 @@ namespace daw::json_to_cpp::types {
 			                      []( auto const &item ) { return item.name( ); } );
 		}
 
-		inline std::string json_name( std::string member_name, bool use_cpp20 ) const noexcept {
-			return daw::visit_nt( value, [&member_name, use_cpp20]( auto const &item ) {
-				return item.json_name( member_name, use_cpp20 );
-			} );
+		inline std::string json_name( std::string member_name,
+		                              bool use_cpp20, daw::string_view parent_name ) const noexcept {
+			return daw::visit_nt( value,
+			                      [&member_name, use_cpp20, parent_name]( auto const &item ) {
+				                      return item.json_name( member_name, use_cpp20, parent_name );
+			                      } );
 		}
 
 		inline std::string array_member_info( ) const {

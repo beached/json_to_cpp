@@ -26,9 +26,9 @@
 #include <daw/daw_visit.h>
 #include <daw/json/daw_json_value_t.h>
 
-#include "ti_array.h"
-#include "ti_base.h"
-#include "ti_types.h"
+#include "types/ti_array.h"
+#include "types/ti_base.h"
+#include "types/ti_types.h"
 
 namespace daw::json_to_cpp::types {
 	namespace {
@@ -66,13 +66,13 @@ namespace daw::json_to_cpp::types {
 	}
 
 	std::string ti_array::json_name( daw::string_view member_name,
-	                                 bool use_cpp20 ) const {
+	                                 bool use_cpp20, daw::string_view parent_name ) const {
 		if( children->empty( ) ) {
 			return "json_array<" +
-			       impl::format_member_name( member_name, use_cpp20 ) + ", " +
+			       impl::format_member_name( member_name, use_cpp20, parent_name ) + ", " +
 			       name( ) + ", " + ti_null::array_member_info( ) + ">";
 		}
-		return "json_array<" + impl::format_member_name( member_name, use_cpp20 ) +
+		return "json_array<" + impl::format_member_name( member_name, use_cpp20, parent_name ) +
 		       ", " + name( ) + ", " +
 		       ::daw::json_to_cpp::types::array_member_info(
 		         children->front( ).second ) +
@@ -80,7 +80,7 @@ namespace daw::json_to_cpp::types {
 	}
 
 	std::string ti_array::array_member_info( ) const {
-		return json_name( "no_name", false );
+		return json_name( "no_name", false, "" );
 	}
 
 	ti_array::ti_array( )

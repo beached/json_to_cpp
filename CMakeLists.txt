@@ -54,17 +54,18 @@ link_directories( ${Boost_LIBRARY_DIRS} )
 set( HEADER_FILES
 	${HEADER_FOLDER}/curl_t.h
 	${HEADER_FOLDER}/json_to_cpp.h
+	${HEADER_FOLDER}/json_to_cpp_config.h
 	${HEADER_FOLDER}/ti_value.h
-	${HEADER_FOLDER}/ti_array.h
-	${HEADER_FOLDER}/ti_base.h
-	${HEADER_FOLDER}/ti_boolean.h
-	${HEADER_FOLDER}/ti_integral.h
-	${HEADER_FOLDER}/ti_kv.h
-	${HEADER_FOLDER}/ti_null.h
-	${HEADER_FOLDER}/ti_object.h
-	${HEADER_FOLDER}/ti_real.h
-	${HEADER_FOLDER}/ti_string.h
-	${HEADER_FOLDER}/ti_types.h
+	${HEADER_FOLDER}/types/ti_array.h
+	${HEADER_FOLDER}/types/ti_base.h
+	${HEADER_FOLDER}/types/ti_boolean.h
+	${HEADER_FOLDER}/types/ti_integral.h
+	${HEADER_FOLDER}/types/ti_kv.h
+	${HEADER_FOLDER}/types/ti_null.h
+	${HEADER_FOLDER}/types/ti_object.h
+	${HEADER_FOLDER}/types/ti_real.h
+	${HEADER_FOLDER}/types/ti_string.h
+	${HEADER_FOLDER}/types/ti_types.h
 )
 
 set( SOURCE_FILES

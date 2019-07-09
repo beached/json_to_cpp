@@ -31,24 +31,24 @@
 #include "ti_base.h"
 
 namespace daw::json_to_cpp::types {
-	struct ti_real {
+	struct ti_integral {
 		bool is_optional = false;
 
-		static constexpr bool is_null = false;
-		static constexpr size_t type = impl::ti_real_pos;
+		constexpr ti_integral( ) noexcept = default;
 
-		constexpr ti_real( ) noexcept = default;
+		static constexpr bool is_null = false;
+		static constexpr size_t type = impl::ti_integral_pos;
 
 		static inline std::string name( ) noexcept {
-			return "double";
+			return "int64_t";
 		}
 
 		static inline std::string array_member_info( ) noexcept {
-			return "json_number<no_name>";
+			return "json_number<no_name, int64_t>";
 		}
 
-		inline static std::string json_name( daw::string_view member_name, bool use_cpp20 ) noexcept {
-			return "json_number<" + impl::format_member_name( member_name, use_cpp20 ) + ">";
+		inline static std::string json_name( daw::string_view member_name, bool use_cpp20, daw::string_view parent_name ) noexcept {
+			return "json_number<" + impl::format_member_name( member_name, use_cpp20, parent_name ) + ", int64_t>";
 		}
 	};
 } // namespace daw::json_to_cpp::types

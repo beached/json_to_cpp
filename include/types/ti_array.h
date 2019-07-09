@@ -24,31 +24,43 @@
 
 #include <cstddef>
 #include <string>
+#include <variant>
 
+#include <daw/daw_ordered_map.h>
 #include <daw/daw_string_view.h>
-#include <daw/json/daw_json_value_t.h>
 
 #include "ti_base.h"
+#include "ti_boolean.h"
+#include "ti_integral.h"
+#include "ti_null.h"
+#include "ti_real.h"
+#include "ti_string.h"
 
 namespace daw::json_to_cpp::types {
-	struct ti_integral {
+	struct ti_array;
+	struct ti_object;
+	struct ti_kv;
+	struct ti_array {
+		using child_items_t = std::variant<ti_null, ti_array, ti_boolean, ti_integral,
+				ti_object, ti_real, ti_string, ti_kv>;
+
+		using child_t = daw::ordered_map<std::string, child_items_t>;
+
+		std::unique_ptr<child_t> children;
+
 		bool is_optional = false;
-
-		constexpr ti_integral( ) noexcept = default;
-
 		static constexpr bool is_null = false;
-		static constexpr size_t type = impl::ti_integral_pos;
+		static constexpr size_t type = impl::ti_array_pos;
 
-		static inline std::string name( ) noexcept {
-			return "int64_t";
-		}
+		ti_array( );
+		ti_array( ti_array && ) noexcept = default;
+		ti_array &operator=( ti_array && ) noexcept = default;
+		~ti_array( ) = default;
+		ti_array( ti_array const &other );
+		ti_array &operator=( ti_array const &rhs );
 
-		static inline std::string array_member_info( ) noexcept {
-			return "json_number<no_name, int64_t>";
-		}
-
-		inline static std::string json_name( daw::string_view member_name, bool use_cpp20 ) noexcept {
-			return "json_number<" + impl::format_member_name( member_name, use_cpp20 ) + ", int64_t>";
-		}
+		std::string name( ) const;
+		std::string json_name( daw::string_view member_name, bool use_cpp20, daw::string_view parent_name ) const;
+		std::string array_member_info( ) const;
 	};
 } // namespace daw::json_to_cpp::types
