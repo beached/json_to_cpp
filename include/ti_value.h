@@ -38,15 +38,15 @@ namespace daw::json_to_cpp::types {
 	struct ti_value {
 		ti_types_t value;
 
-		template<
-		  typename Derived,
-		  daw::enable_if_t<std::is_constructible_v<ti_types_t, Derived>> = nullptr>
+		template<typename Derived,
+		         daw::enable_when_t<std::is_constructible_v<ti_types_t, Derived>> =
+		           nullptr>
 		explicit constexpr ti_value( Derived &&other )
 		  : value( std::forward<Derived>( other ) ) {}
 
-		template<
-		  typename Derived,
-		  daw::enable_if_t<std::is_constructible_v<ti_types_t, Derived>> = nullptr>
+		template<typename Derived,
+		         daw::enable_when_t<std::is_constructible_v<ti_types_t, Derived>> =
+		           nullptr>
 		constexpr ti_value &operator=( Derived &&rhs ) {
 			value = std::forward<Derived>( rhs );
 			return *this;
@@ -57,12 +57,13 @@ namespace daw::json_to_cpp::types {
 			                      []( auto const &item ) { return item.name( ); } );
 		}
 
-		inline std::string json_name( std::string member_name,
-		                              bool use_cpp20, daw::string_view parent_name ) const noexcept {
-			return daw::visit_nt( value,
-			                      [&member_name, use_cpp20, parent_name]( auto const &item ) {
-				                      return item.json_name( member_name, use_cpp20, parent_name );
-			                      } );
+		inline std::string json_name( std::string member_name, bool use_cpp20,
+		                              daw::string_view parent_name ) const
+		  noexcept {
+			return daw::visit_nt(
+			  value, [&member_name, use_cpp20, parent_name]( auto const &item ) {
+				  return item.json_name( member_name, use_cpp20, parent_name );
+			  } );
 		}
 
 		inline std::string array_member_info( ) const {
