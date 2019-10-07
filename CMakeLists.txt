@@ -99,15 +99,15 @@ set( SOURCE_FILES
 	${SOURCE_FOLDER}/ti_object.cpp
 )
 
-add_library( json_to_cpp ${HEADER_FILES} ${SOURCE_FILES} )
+add_library( json_to_cpp_lib ${HEADER_FILES} ${SOURCE_FILES} )
+add_dependencies( json_to_cpp_lib dependency_stub )
+target_link_libraries( json_to_cpp_lib tz utf_range utf_string ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+
+add_executable( json_to_cpp ${HEADER_FILES} ${SOURCE_FOLDER}/main.cpp )
 add_dependencies( json_to_cpp dependency_stub )
-target_link_libraries( json_to_cpp tz utf_range utf_string ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+target_link_libraries( json_to_cpp json_to_cpp_lib parse_json utf_range temp_file ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} )
 
-add_executable( json_to_cpp_bin ${HEADER_FILES} ${SOURCE_FOLDER}/main.cpp )
-add_dependencies( json_to_cpp_bin dependency_stub )
-target_link_libraries( json_to_cpp_bin json_to_cpp parse_json utf_range temp_file ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} )
-
-install( TARGETS json_to_cpp DESTINATION lib )
-install( TARGETS json_to_cpp_bin DESTINATION bin )
-install( DIRECTORY ${HEADER_FOLDER}/ DESTINATION include/daw/json_to_cpp )
+#install( TARGETS json_to_cpp DESTINATION lib )
+install( TARGETS json_to_cpp DESTINATION bin )
+#install( DIRECTORY ${HEADER_FOLDER}/ DESTINATION include/daw/json_to_cpp )
 
