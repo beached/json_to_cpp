@@ -1,0 +1,38 @@
+{
+	"provides": "json_to_cpp",
+	"build_type": "cmake",
+	"dependencies": [ 
+		{
+			"provides": "header_libraries",
+			"download_type": "git",
+			"build_type": "cmake",
+			"uri": "https://github.com/beached/header_libraries.git"
+		},
+		{
+			"provides": "parse_json",
+			"download_type": "git",
+			"build_type": "cmake",
+    	"uri": "https://github.com/beached/parse_json.git"
+		},
+		{
+			"provides": "utf_range",
+			"download_type": "git",
+			"build_type": "cmake",
+    	"uri": "https://github.com/beached/utf_range.git"
+		},
+		{
+			"provides": "date",
+			"download_type": "git",
+			"build_type": "cmake",
+			"uri": "https://github.com/howardhinnant/date.git",
+			"cmake_args": [ "-DUSE_SYSTEM_TZ_DB=true" ]
+		},
+		{
+			"provides": "temp_file",
+			"download_type": "git",
+			"build_type": "cmake",
+    	"uri": "https://github.com/beached/libtemp_file.git"
+		}
+	]
+}
+
