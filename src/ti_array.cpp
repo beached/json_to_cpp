@@ -69,14 +69,15 @@ namespace daw::json_to_cpp::types {
 	                                 daw::string_view parent_name ) const {
 		if( children->empty( ) ) {
 			return "json_array<" +
-			       impl::format_member_name( member_name, use_cpp20, parent_name ) +
-			       ", " + name( ) + ", " + ti_null::array_member_info( ) + ">";
+			       impl::format_member_name( member_name, use_cpp20, parent_name ) + 
+						 ", " + ti_null::array_member_info( ) +
+			       ", " + name( )  + ">";
 		}
 		return "json_array<" +
 		       impl::format_member_name( member_name, use_cpp20, parent_name ) +
-		       ", " + name( ) + ", " +
-		       ::daw::json_to_cpp::types::array_member_info(
+					 ", " + daw::json_to_cpp::types::array_member_info(
 		         children->front( ).second ) +
+		       ", " + name( ) + 
 		       ">";
 	}
 

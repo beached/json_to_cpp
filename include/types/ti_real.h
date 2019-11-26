@@ -44,7 +44,7 @@ namespace daw::json_to_cpp::types {
 		}
 
 		static inline std::string array_member_info( ) noexcept {
-			return "json_number<no_name>";
+			return "double";
 		}
 
 		inline static std::string

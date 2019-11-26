@@ -53,7 +53,7 @@ namespace daw::json_to_cpp::types {
 			if( m_use_string_view ) {
 				return "json_string<no_name, std::string_view>";
 			}
-			return "json_string<no_name>";
+			return "std::string";
 		}
 
 		inline std::string json_name( daw::string_view member_name, bool use_cpp20,
