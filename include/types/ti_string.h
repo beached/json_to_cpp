@@ -56,11 +56,17 @@ namespace daw::json_to_cpp::types {
 			return "json_string<no_name>";
 		}
 
-		inline std::string json_name( daw::string_view member_name, bool use_cpp20, daw::string_view parent_name ) const noexcept {
+		inline std::string json_name( daw::string_view member_name, bool use_cpp20,
+		                              daw::string_view parent_name ) const
+		  noexcept {
 			if( m_use_string_view ) {
-				return "json_string<" + impl::format_member_name( member_name, use_cpp20, parent_name ) + ", std::string_view>";
+				return "json_string<" +
+				       impl::format_member_name( member_name, use_cpp20, parent_name ) +
+				       ", std::string_view>";
 			}
-			return "json_string<" + impl::format_member_name( member_name, use_cpp20, parent_name ) + ">";
+			return "json_string<" +
+			       impl::format_member_name( member_name, use_cpp20, parent_name ) +
+			       ">";
 		}
 	};
 } // namespace daw::json_to_cpp::types

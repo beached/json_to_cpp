@@ -77,7 +77,7 @@ namespace daw::json_to_cpp {
 							"goto", "if", "import", "", "int", "long", "module", "mutable", "namespace",
 							"new", "noexcept", "not", "not_eq", "nullptr", "operator", "or", "or_eq", "private",
 							"protected", "public", "register", "reinterpret_cast", "requires", "return", "short",
-							"signed", "sizeof", "static", "static_assert", "static_cast", "struct", "switch", "synchronized",
+							"signed", "sizeof", "small", "static", "static_assert", "static_cast", "struct", "switch", "synchronized",
 							"template", "this", "thread_local", "throw", "true", "try", "typedef", "typeid", "typename",
 							"union", "unsigned", "using", "virtual", "void", "volatile", "wchar_t", "while", "xor", "xor_eq"} );
 			// clang-format on
@@ -396,7 +396,8 @@ namespace daw::json_to_cpp {
 						config.cpp_file( ) << "json_nullable<";
 					}
 					config.cpp_file( ) << types::ti_value( child.second )
-					                        .json_name( child.first, config.has_cpp20, cur_obj.object_name );
+					                        .json_name( child.first, config.has_cpp20,
+					                                    cur_obj.object_name );
 					if( is_optional( child.second ) ) {
 						config.cpp_file( ) << ">\n";
 					} else {
@@ -405,8 +406,8 @@ namespace daw::json_to_cpp {
 				}
 				config.cpp_file( ) << "\t>{};\n}\n\n";
 
-				config.cpp_file( ) << "inline auto to_json_data( " << cur_obj.object_name
-				                   << " const & value ) {\n";
+				config.cpp_file( ) << "inline auto to_json_data( "
+				                   << cur_obj.object_name << " const & value ) {\n";
 				config.cpp_file( ) << "\treturn std::forward_as_tuple( ";
 				is_first = true;
 				for( auto const &child : *cur_obj.children ) {

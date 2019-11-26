@@ -60,11 +60,12 @@ namespace daw::json_to_cpp::types {
 		return json_name( "no_name", false, "" );
 	}
 
-	std::string ti_kv::json_name( daw::string_view member_name,
-	                              bool use_cpp20, daw::string_view parent_name ) const {
-		std::string result = "json_key_value<" +
-		                     impl::format_member_name( member_name, use_cpp20, parent_name ) +
-		                     ", " + name( ) + ", ";
+	std::string ti_kv::json_name( daw::string_view member_name, bool use_cpp20,
+	                              daw::string_view parent_name ) const {
+		std::string result =
+		  "json_key_value<" +
+		  impl::format_member_name( member_name, use_cpp20, parent_name ) + ", " +
+		  name( ) + ", ";
 		if( value ) {
 			result += daw::visit_nt(
 			  value->front( ).second,

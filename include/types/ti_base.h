@@ -51,12 +51,11 @@ namespace daw::json_to_cpp::types::impl {
 	auto var_to_pack_impl( Variant<Args...> ) -> pack_list<Args...>;
 
 	template<typename Variant>
-	using var_to_pack_t = decltype(var_to_pack_impl( std::declval<Variant>( ) ) );
-
+	using var_to_pack_t =
+	  decltype( var_to_pack_impl( std::declval<Variant>( ) ) );
 
 	template<typename... Args0, typename... Args1>
-	constexpr bool are_same( pack_list<Args0...>,
-	                         pack_list<Args1...> ) noexcept {
+	constexpr bool are_same( pack_list<Args0...>, pack_list<Args1...> ) noexcept {
 
 		if( sizeof...( Args0 ) != sizeof...( Args1 ) ) {
 			return false;
@@ -64,7 +63,8 @@ namespace daw::json_to_cpp::types::impl {
 		return ( std::is_same_v<Args0, Args1> and ... );
 	}
 
-	inline std::string format_member_name( daw::string_view name, bool use_cpp20, daw::string_view parent_name ) {
+	inline std::string format_member_name( daw::string_view name, bool use_cpp20,
+	                                       daw::string_view parent_name ) {
 		if( use_cpp20 ) {
 			return "\"" + name + "\"";
 		}

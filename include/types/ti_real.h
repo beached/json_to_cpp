@@ -47,8 +47,12 @@ namespace daw::json_to_cpp::types {
 			return "json_number<no_name>";
 		}
 
-		inline static std::string json_name( daw::string_view member_name, bool use_cpp20, daw::string_view parent_name ) noexcept {
-			return "json_number<" + impl::format_member_name( member_name, use_cpp20, parent_name ) + ">";
+		inline static std::string
+		json_name( daw::string_view member_name, bool use_cpp20,
+		           daw::string_view parent_name ) noexcept {
+			return "json_number<" +
+			       impl::format_member_name( member_name, use_cpp20, parent_name ) +
+			       ">";
 		}
 	};
 } // namespace daw::json_to_cpp::types

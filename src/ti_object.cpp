@@ -40,8 +40,10 @@ namespace daw::json_to_cpp::types {
 	  , object_name( std::move( obj_name ) ) {}
 
 	std::string ti_object::json_name( daw::string_view member_name,
-	                                  bool use_cpp20, daw::string_view parent_name ) const {
-		return "json_class<" + impl::format_member_name( member_name, use_cpp20, parent_name ) +
+	                                  bool use_cpp20,
+	                                  daw::string_view parent_name ) const {
+		return "json_class<" +
+		       impl::format_member_name( member_name, use_cpp20, parent_name ) +
 		       ", " + name( ) + ">";
 	}
 

@@ -41,8 +41,9 @@ namespace daw::json_to_cpp::types {
 	struct ti_object;
 	struct ti_kv;
 	struct ti_array {
-		using child_items_t = std::variant<ti_null, ti_array, ti_boolean, ti_integral,
-				ti_object, ti_real, ti_string, ti_kv>;
+		using child_items_t =
+		  std::variant<ti_null, ti_array, ti_boolean, ti_integral, ti_object,
+		               ti_real, ti_string, ti_kv>;
 
 		using child_t = daw::ordered_map<std::string, child_items_t>;
 
@@ -60,7 +61,8 @@ namespace daw::json_to_cpp::types {
 		ti_array &operator=( ti_array const &rhs );
 
 		std::string name( ) const;
-		std::string json_name( daw::string_view member_name, bool use_cpp20, daw::string_view parent_name ) const;
+		std::string json_name( daw::string_view member_name, bool use_cpp20,
+		                       daw::string_view parent_name ) const;
 		std::string array_member_info( ) const;
 	};
 } // namespace daw::json_to_cpp::types

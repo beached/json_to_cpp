@@ -24,8 +24,8 @@
 			"provides": "date",
 			"download_type": "git",
 			"build_type": "cmake",
-			"uri": "https://github.com/howardhinnant/date.git",
-			"cmake_args": [ "-DUSE_SYSTEM_TZ_DB=true" ]
+			"uri": "https://github.com/beached/date.git",
+			"cmake_args": [ "-DUSE_SYSTEM_TZ_DB=ON", "-DENABLE_DATE_TESTING=OFF", "-DCMAKE_CXX_STANDARD=17" ]
 		},
 		{
 			"provides": "temp_file",

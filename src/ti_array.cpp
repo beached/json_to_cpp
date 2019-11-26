@@ -65,14 +65,15 @@ namespace daw::json_to_cpp::types {
 		       ::daw::json_to_cpp::types::name( children->front( ).second ) + ">";
 	}
 
-	std::string ti_array::json_name( daw::string_view member_name,
-	                                 bool use_cpp20, daw::string_view parent_name ) const {
+	std::string ti_array::json_name( daw::string_view member_name, bool use_cpp20,
+	                                 daw::string_view parent_name ) const {
 		if( children->empty( ) ) {
 			return "json_array<" +
-			       impl::format_member_name( member_name, use_cpp20, parent_name ) + ", " +
-			       name( ) + ", " + ti_null::array_member_info( ) + ">";
+			       impl::format_member_name( member_name, use_cpp20, parent_name ) +
+			       ", " + name( ) + ", " + ti_null::array_member_info( ) + ">";
 		}
-		return "json_array<" + impl::format_member_name( member_name, use_cpp20, parent_name ) +
+		return "json_array<" +
+		       impl::format_member_name( member_name, use_cpp20, parent_name ) +
 		       ", " + name( ) + ", " +
 		       ::daw::json_to_cpp::types::array_member_info(
 		         children->front( ).second ) +
