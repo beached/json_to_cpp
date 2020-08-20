@@ -245,8 +245,8 @@ namespace daw::json_to_cpp {
 		                   std::vector<types::ti_object> &obj_info,
 		                   state_t &obj_state, config_t const &config ) {
 
-			using ::daw::json::json_value_t;
-			using namespace ::daw::json_to_cpp::types;
+			using daw::json::json_value_t;
+			using namespace daw::json_to_cpp::types;
 			if( current_item.is_integer( ) ) {
 				obj_state.has_integrals = true;
 				return ti_integral( );
@@ -336,7 +336,7 @@ namespace daw::json_to_cpp {
 				parse_json_object( current_item, config.root_object_name, result,
 				                   obj_state, config );
 			} else {
-				auto root_obj_member = ::daw::json::make_object_value_item(
+				auto root_obj_member = daw::json::make_object_value_item(
 				  config.root_object_name.c_str( ), current_item );
 				auto root_object = json_object_value( );
 				root_object.members_v.push_back( std::move( root_obj_member ) );
@@ -529,7 +529,7 @@ namespace daw::json_to_cpp {
 
 	void generate_cpp( daw::string_view json_string, config_t &config ) {
 		auto obj_state = state_t( );
-		auto json_obj = ::daw::json::parse_json( json_string );
+		auto json_obj = daw::json::parse_json( json_string );
 		auto obj_info = parse_json_object( json_obj, obj_state, config );
 		generate_code( obj_info, config, obj_state );
 	}

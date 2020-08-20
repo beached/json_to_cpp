@@ -18,7 +18,8 @@
 			"provides": "utf_range",
 			"download_type": "git",
 			"build_type": "cmake",
-    	"uri": "https://github.com/beached/utf_range.git"
+    	"uri": "https://github.com/beached/utf_range.git",
+			"cmake_args": [ "-DDAW_USE_FULL_LIBRARY=ON" ]
 		},
 		{
 			"provides": "date",

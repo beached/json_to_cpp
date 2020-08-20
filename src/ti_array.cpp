@@ -62,23 +62,22 @@ namespace daw::json_to_cpp::types {
 			return "std::vector<" + ti_null::name( ) + ">";
 		}
 		return "std::vector<" +
-		       ::daw::json_to_cpp::types::name( children->front( ).second ) + ">";
+		       daw::json_to_cpp::types::name( children->front( ).second ) + ">";
 	}
 
 	std::string ti_array::json_name( daw::string_view member_name, bool use_cpp20,
 	                                 daw::string_view parent_name ) const {
 		if( children->empty( ) ) {
 			return "json_array<" +
-			       impl::format_member_name( member_name, use_cpp20, parent_name ) + 
-						 ", " + ti_null::array_member_info( ) +
-			       ", " + name( )  + ">";
+			       impl::format_member_name( member_name, use_cpp20, parent_name ) +
+			       ", " + ti_null::array_member_info( ) + ", " + name( ) + ">";
 		}
 		return "json_array<" +
 		       impl::format_member_name( member_name, use_cpp20, parent_name ) +
-					 ", " + daw::json_to_cpp::types::array_member_info(
+		       ", " +
+		       daw::json_to_cpp::types::array_member_info(
 		         children->front( ).second ) +
-		       ", " + name( ) + 
-		       ">";
+		       ", " + name( ) + ">";
 	}
 
 	std::string ti_array::array_member_info( ) const {

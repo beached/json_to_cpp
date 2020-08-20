@@ -90,7 +90,7 @@ target_link_libraries( json_to_cpp_lib utf_range utf_string ${Boost_LIBRARIES} $
 
 add_executable( json_to_cpp ${HEADER_FILES} ${SOURCE_FOLDER}/main.cpp )
 add_dependencies( json_to_cpp dependency_stub )
-target_link_libraries( json_to_cpp json_to_cpp_lib parse_json utf_range temp_file ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} )
+target_link_libraries( json_to_cpp json_to_cpp_lib parse_json utf_range ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} )
 
 #install( TARGETS json_to_cpp DESTINATION lib )
 install( TARGETS json_to_cpp DESTINATION bin )

@@ -109,7 +109,7 @@ namespace daw::curl {
 		headers.append( "charsets: utf-8" );
 
 		auto curl = curl_t( );
-		if( !curl ) {
+		if( not curl ) {
 			return std::nullopt;
 		}
 		curl.setopt( CURLOPT_HTTPHEADER, headers.get( ) );
@@ -151,7 +151,7 @@ namespace daw::curl {
 	}
 
 	bool is_url( daw::string_view path ) {
-		return boost::starts_with( path.data( ), "http://" ) ||
+		return boost::starts_with( path.data( ), "http://" ) or
 		       boost::starts_with( path.data( ), "https://" );
 	}
 } // namespace daw::curl

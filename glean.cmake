@@ -1,9 +1,16 @@
-
 include( ExternalProject )
 externalproject_add(
   temp_file_prj
   GIT_REPOSITORY "https://github.com/beached/libtemp_file.git"
   SOURCE_DIR "${CMAKE_BINARY_DIR}/dependencies/temp_file"
+  INSTALL_DIR "${CMAKE_BINARY_DIR}/install"
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/install -DGLEAN_INSTALL_ROOT=${CMAKE_BINARY_DIR}/install
+)
+
+externalproject_add(
+  date_prj
+  GIT_REPOSITORY "https://github.com/beached/date.git"
+  SOURCE_DIR "${CMAKE_BINARY_DIR}/dependencies/date"
   INSTALL_DIR "${CMAKE_BINARY_DIR}/install"
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/install -DGLEAN_INSTALL_ROOT=${CMAKE_BINARY_DIR}/install
 )
@@ -18,19 +25,11 @@ externalproject_add(
 
 externalproject_add(
   utf_range_prj
-  GIT_REPOSITORY "https://github.com/beached/utf_range.git"
   DEPENDS header_libraries_prj
+  GIT_REPOSITORY "https://github.com/beached/utf_range.git"
   SOURCE_DIR "${CMAKE_BINARY_DIR}/dependencies/utf_range"
   INSTALL_DIR "${CMAKE_BINARY_DIR}/install"
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/install -DGLEAN_INSTALL_ROOT=${CMAKE_BINARY_DIR}/install
-)
-
-externalproject_add(
-  date_prj
-  GIT_REPOSITORY "https://github.com/beached/date.git"
-  SOURCE_DIR "${CMAKE_BINARY_DIR}/dependencies/date"
-  INSTALL_DIR "${CMAKE_BINARY_DIR}/install"
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/install -DGLEAN_INSTALL_ROOT=${CMAKE_BINARY_DIR}/install -DUSE_SYSTEM_TZ_DB=ON -DENABLE_DATE_TESTING=OFF -DCMAKE_CXX_STANDARD=17
+	CMAKE_ARGS -DDAW_USE_FULL_LIBRARY=On -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/install -DGLEAN_INSTALL_ROOT=${CMAKE_BINARY_DIR}/install
 )
 
 externalproject_add(
