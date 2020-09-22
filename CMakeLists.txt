@@ -1,63 +1,31 @@
-cmake_minimum_required( VERSION 3.10 )
-
-project( json_to_cpp_prj )
-
-include( ExternalProject )
-
-find_package( Boost 1.60.0 COMPONENTS system date_time iostreams program_options filesystem regex unit_test_framework REQUIRED )
-
-find_package( CURL )
-find_package( Threads REQUIRED )
-
-enable_testing( )
-add_definitions( -DBOOST_TEST_DYN_LINK ) 
+# Copyright (c) Darrell Wright
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE or copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+# Official repository: https://github.com/beached/json_to_cpp
+#
 
 
-set( CMAKE_CXX_STANDARD 17 CACHE STRING "The C++ standard whose features are requested.")
+cmake_minimum_required(VERSION 3.13)
 
-include( "${CMAKE_SOURCE_DIR}/dependent_projects/CMakeListsCompiler.txt" )
+project("json_to_cpp"
+        VERSION "1.0.0"
+				DESCRIPTION "Try to use the JSON structures to make C++ structures and bindings"
+        HOMEPAGE_URL "https://github.com/beached/json_to_cpp"
+        LANGUAGES C CXX)
 
-if( "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
-	set( GLEAN_CACHE "${CMAKE_SOURCE_DIR}/.glean/debug" )
-	set( GLEAN_CACHE2 "${CMAKE_SOURCE_DIR}/.glean/release" )
-elseif( "${CMAKE_BUILD_TYPE}" STREQUAL "Release" )
-	set( GLEAN_CACHE "${CMAKE_SOURCE_DIR}/.glean/release" )
-	set( GLEAN_CACHE2 "${CMAKE_SOURCE_DIR}/.glean/debug" )
-else( )
-	set( GLEAN_CACHE "${CMAKE_SOURCE_DIR}/.glean/release" )
-	set( GLEAN_CACHE2 "${CMAKE_SOURCE_DIR}/.glean/debug" )
-endif( )
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "The C++ standard whose features are requested.")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-message( "Building for: ${CMAKE_BUILD_TYPE}" )
-message( "Checking for glean cache: '${GLEAN_CACHE}'" )
-if( EXISTS "${GLEAN_CACHE}" )
-	message( "using glean dependencies at ${GLEAN_CACHE}" )
-	add_custom_target( dependency_stub )
-	include_directories( SYSTEM "${GLEAN_CACHE}/include" )
-	link_directories( "${GLEAN_CACHE}/lib" )
-elseif( EXISTS "${GLEAN_CACHE2}" )
-	message( "looks like glean is in use but missing ${GLEAN_CACHE}" )
-elseif( EXISTS "${CMAKE_SOURCE_DIR}/glean.cmake" )
-	message( "glean.cmake detected" )
-	include( "${CMAKE_SOURCE_DIR}/glean.cmake" )
-	add_library( dependency_stub STATIC "${CMAKE_SOURCE_DIR}/dependent_projects/stub.cpp" )
-	add_dependencies( dependency_stub ${DEP_PROJECT_DEPS} )
-	include_directories( SYSTEM "${CMAKE_BINARY_DIR}/install/include" )
-	link_directories( "${CMAKE_BINARY_DIR}/install/lib" )
-endif( )
+find_package( Boost 1.60.0 COMPONENTS program_options REQUIRED )
+find_package( CURL REQUIRED )
+find_package( OpenSSL REQUIRED )
+add_subdirectory(extern)
 
-set( HEADER_FOLDER "include" )
-set( SOURCE_FOLDER "src" )
-set( TEST_FOLDER "tests" )
-
-include_directories( SYSTEM "${CMAKE_BINARY_DIR}/install/include" )
-include_directories( ${HEADER_FOLDER} )
-include_directories( SYSTEM ${OPENSSL_INCLUDE_DIR} )
-include_directories( SYSTEM ${CURL_INCLUDE_DIRS} )
-include_directories( SYSTEM ${Boost_INCLUDE_DIRS} )
-
-link_directories( "${CMAKE_BINARY_DIR}/install/lib" )
-link_directories( ${Boost_LIBRARY_DIRS} )
+set( HEADER_FOLDER include )
+set( SOURCE_FOLDER src )
 
 set( HEADER_FILES
 	${HEADER_FOLDER}/curl_t.h
@@ -82,17 +50,22 @@ set( SOURCE_FILES
 	${SOURCE_FOLDER}/ti_array.cpp
 	${SOURCE_FOLDER}/ti_kv.cpp
 	${SOURCE_FOLDER}/ti_object.cpp
+	${SOURCE_FOLDER}/main.cpp
 )
 
-add_library( json_to_cpp_lib ${HEADER_FILES} ${SOURCE_FILES} )
-add_dependencies( json_to_cpp_lib dependency_stub )
-target_link_libraries( json_to_cpp_lib utf_range utf_string ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+add_executable( ${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES} )
+target_link_libraries( ${PROJECT_NAME} PRIVATE
+	daw::parse_json 
+	daw::utf_range 
+	daw::header_libraries 
+	Boost::program_options
+	daw::libtemp_file 
+	date::date
+	OpenSSL::SSL
+	OpenSSL::Crypto
+	CURL::libcurl
+)
+target_include_directories( ${PROJECT_NAME} PRIVATE ${HEADER_FOLDER} )
 
-add_executable( json_to_cpp ${HEADER_FILES} ${SOURCE_FOLDER}/main.cpp )
-add_dependencies( json_to_cpp dependency_stub )
-target_link_libraries( json_to_cpp json_to_cpp_lib parse_json utf_range ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} )
-
-#install( TARGETS json_to_cpp DESTINATION lib )
-install( TARGETS json_to_cpp DESTINATION bin )
-#install( DIRECTORY ${HEADER_FOLDER}/ DESTINATION include/daw/json_to_cpp )
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 

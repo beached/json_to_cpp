@@ -1,24 +1,10 @@
-// The MIT License (MIT)
+// Copyright (c) Darrell Wright
 //
-// Copyright (c) 2016-2019 Darrell Wright
+// Distributed under the Boost Software License, version 1.0. (see accompanying
+// file license or copy at http://www.boost.org/license_1_0.txt)
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files( the "Software" ), to
-// deal in the Software without restriction, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense, and / or
-// sell copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
+// Official repository: https://github.com/beached/daw_json_link
 //
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
 
 #include <algorithm>
 #include <limits>
@@ -41,11 +27,11 @@ namespace daw::json_to_cpp {
 			bool has_optionals = false;
 			bool has_strings = false;
 			bool has_kv = false;
-			std::vector<std::string> path = {};
+			std::vector<std::string> path = { };
 		};
 
 		bool is_valid_id_char( char c ) noexcept {
-			return ( std::isalnum( c ) != 0 ) or c == '_';
+			return ( std::isalnum( c ) != 0 ) | ( c == '_' ) | ( c != '~' );
 		}
 
 		std::string find_replace( std::string subject, std::string const &search,
@@ -85,10 +71,10 @@ namespace daw::json_to_cpp {
 			name = find_replace( name, "\\U", "0x" );
 			name = find_replace( name, "\\u", "0x" );
 			// JSON member names are strings.  That is it, so empty looks
-			// like it is valid, as is all digits, or C++ keyworks.
+			// like it is valid, as is all digits, or C++ keywords.
 			if( name.empty( ) or
 			    !( std::isalpha( name.front( ) ) or name.front( ) == '_' ) or
-			    keywords.count( {name.data( ), name.size( )} ) > 0 ) {
+			    keywords.count( { name.data( ), name.size( ) } ) > 0 ) {
 
 				std::string const prefix = "_json";
 				name.insert( name.begin( ), prefix.begin( ), prefix.end( ) );
@@ -186,7 +172,8 @@ namespace daw::json_to_cpp {
 
 		template<typename Variant>
 		constexpr decltype( auto ) is_optional( Variant &&v ) {
-			return daw::visit_nt( std::forward<Variant>( v ), is_optional_visitor{} );
+			return daw::visit_nt( std::forward<Variant>( v ),
+			                      is_optional_visitor{ } );
 		}
 
 		template<typename Variant>
@@ -197,7 +184,7 @@ namespace daw::json_to_cpp {
 		void add_or_merge( std::vector<types::ti_object> &obj_info,
 		                   types::ti_object &obj ) {
 			auto pos =
-			  find_by_name( obj_info, {obj.name( ).data( ), obj.name( ).size( )} );
+			  find_by_name( obj_info, { obj.name( ).data( ), obj.name( ).size( ) } );
 			if( obj_info.end( ) == pos ) {
 				// First time
 				obj_info.push_back( obj );

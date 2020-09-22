@@ -1,26 +1,11 @@
-// The MIT License (MIT)
+// Copyright (c) Darrell Wright
 //
-// Copyright (c) 2019 Darrell Wright
+// Distributed under the Boost Software License, version 1.0. (see accompanying
+// file license or copy at http://www.boost.org/license_1_0.txt)
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files( the "Software" ), to
-// deal in the Software without restriction, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense, and / or
-// sell copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
+// Official repository: https://github.com/beached/daw_json_link
 //
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
 
-#include <boost/algorithm/string/predicate.hpp>
 #include <cstdlib>
 #include <curl/curl.h>
 #include <iostream>
@@ -147,11 +132,12 @@ namespace daw::curl {
 			return std::nullopt;
 		}
 
-		return {std::move( httpData )};
+		return { std::move( httpData ) };
 	}
 
 	bool is_url( daw::string_view path ) {
-		return boost::starts_with( path.data( ), "http://" ) or
-		       boost::starts_with( path.data( ), "https://" );
+		static constexpr daw::string_view http_pref = "http://";
+		static constexpr daw::string_view https_pref = "https://";
+		return path.starts_with( http_pref ) | path.starts_with( https_pref );
 	}
 } // namespace daw::curl
