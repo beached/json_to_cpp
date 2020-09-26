@@ -57,7 +57,7 @@ namespace daw::json_to_cpp::types::impl {
 		if( parent_name.empty( ) ) {
 			return name;
 		}
-		std::string result = "symbols_" + parent_name.to_string( ) + "::" + name;
+		std::string result = "mem_" + name;
 		return result;
 	}
 } // namespace daw::json_to_cpp::types::impl

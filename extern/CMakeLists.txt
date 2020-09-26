@@ -35,6 +35,11 @@ FetchContent_Declare(
 	GIT_REPOSITORY https://github.com/beached/libtemp_file.git
 )
 
+FetchContent_Declare(
+	fmtlib
+	GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+)	
+
 option( ENABLE_DATE_TESTING "" OFF )
 option( USE_SYSTEM_TZ_DB "" ON )
 FetchContent_Declare(
@@ -42,5 +47,5 @@ FetchContent_Declare(
 	GIT_REPOSITORY https://github.com/howardhinnant/date.git
 )
 
-FetchContent_MakeAvailable(daw_header_libraries daw_utf_range daw_parse_json daw_libtemp_file date )
+FetchContent_MakeAvailable(daw_header_libraries daw_utf_range daw_parse_json daw_libtemp_file date fmtlib )
 

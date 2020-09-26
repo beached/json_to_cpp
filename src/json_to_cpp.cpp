@@ -6,18 +6,19 @@
 // Official repository: https://github.com/beached/daw_json_link
 //
 
-#include <algorithm>
-#include <limits>
-#include <string>
-#include <typeindex>
+#include "json_to_cpp.h"
+#include "ti_value.h"
+#include "types/ti_types.h"
 
 #include <daw/daw_bounded_hash_set.h>
 #include <daw/daw_string_view.h>
 #include <daw/json/daw_json_parser.h>
 
-#include "json_to_cpp.h"
-#include "ti_value.h"
-#include "types/ti_types.h"
+#include <algorithm>
+#include <fmt/core.h>
+#include <limits>
+#include <string>
+#include <typeindex>
 
 namespace daw::json_to_cpp {
 	namespace {
@@ -57,7 +58,8 @@ namespace daw::json_to_cpp {
 					daw::make_bounded_hash_set<daw::string_view>( {
 							"alignas", "alignof", "and", "and_eq", "asm",	"atomic_cancel", "atomic_commit",
 							"atomic_noexcept", "auto", "bitand", "bitor", "bool",	"break", "case", "catch",
-							"char", "char16_t", "char32_t", "class", "compl", "concept", "const", "constexpr",
+							"char", "char8_t", "char16_t", "char32_t", "class", "compl", "concept", "const",
+							"consteval", "constexpr", "constinit", "co_await", "co_return", "co_yield",
 							"const_cast", "continue", "decltype", "default", "delete", "do", "double", "dynamic_cast",
 							"else", "enum", "explicit", "export", "extern", "false", "float", "for", "friend",
 							"goto", "if", "import", "", "int", "long", "module", "mutable", "namespace",
@@ -73,7 +75,7 @@ namespace daw::json_to_cpp {
 			// JSON member names are strings.  That is it, so empty looks
 			// like it is valid, as is all digits, or C++ keywords.
 			if( name.empty( ) or
-			    !( std::isalpha( name.front( ) ) or name.front( ) == '_' ) or
+			    not( std::isalpha( name.front( ) ) or name.front( ) == '_' ) or
 			    keywords.count( { name.data( ), name.size( ) } ) > 0 ) {
 
 				std::string const prefix = "_json";
@@ -85,7 +87,7 @@ namespace daw::json_to_cpp {
 			daw::algorithm::transform_it(
 			  name.begin( ), name.end( ), std::back_inserter( new_name ),
 			  []( char c, auto it ) {
-				  if( !is_valid_id_char( c ) ) {
+				  if( not is_valid_id_char( c ) ) {
 					  std::string const new_value =
 					    "0x" + std::to_string( static_cast<int>( c ) );
 					  it = std::copy( new_value.begin( ), new_value.end( ), it );
@@ -335,88 +337,81 @@ namespace daw::json_to_cpp {
 		}
 
 		void generate_json_link_maps( std::integral_constant<int, 3>,
-		                              bool definition, config_t &config,
+		                              config_t &config,
 		                              types::ti_object const &cur_obj ) {
-			if( !config.enable_jsonlink ) {
+			if( not config.enable_jsonlink ) {
 				return;
 			}
-			if( !definition ) {
-				using daw::json::json_value_t;
-				config.cpp_file( ) << "namespace symbols_" << cur_obj.object_name
-				                   << " {\n";
-				for( auto const &child : *cur_obj.children ) {
-					if( config.hide_null_only and is_null( child.second ) ) {
-						continue;
-					}
-					config.cpp_file( )
-					  << "\tstatic constexpr char const " << child.first << "[] = \"";
-					if( daw::string_view( child.first.data( ), child.first.size( ) )
-					      .starts_with( "_json" ) ) {
-						config.cpp_file( )
-						  << daw::string_view( child.first.data( ), child.first.size( ) )
-						       .substr( 5 )
-						  << "\";\n";
-					} else {
-						config.cpp_file( ) << child.first << "\";\n";
-					}
+			using daw::json::json_value_t;
+			config.cpp_file( ) << fmt::format( "namespace daw::json {{\n",
+			                                   cur_obj.object_name );
+			for( auto const &child : *cur_obj.children ) {
+				if( config.hide_null_only and is_null( child.second ) ) {
+					continue;
 				}
-				config.cpp_file( ) << "}\n\n";
-				config.cpp_file( ) << "inline auto describe_json_class( "
-				                   << cur_obj.object_name
-				                   << " ) {\n\tusing namespace daw::json;\n";
-
-				config.cpp_file( ) << "\treturn daw::json::class_description_t<\n";
-
-				bool is_first = true;
-
-				for( auto const &child : *cur_obj.children ) {
-					if( config.hide_null_only and is_null( child.second ) ) {
-						continue;
-					}
-					config.cpp_file( ) << "\t\t";
-					if( !is_first ) {
-						config.cpp_file( ) << ",";
-					} else {
-						is_first = false;
-					}
-					if( is_optional( child.second ) ) {
-						config.cpp_file( ) << "json_nullable<";
-					}
-					config.cpp_file( ) << types::ti_value( child.second )
-					                        .json_name( child.first, config.has_cpp20,
-					                                    cur_obj.object_name );
-					if( is_optional( child.second ) ) {
-						config.cpp_file( ) << ">\n";
-					} else {
-						config.cpp_file( ) << '\n';
-					}
+				config.cpp_file( ) << fmt::format(
+				  "\ttemplate<>\n\tstruct json_data_contract<{}> {{\n",
+				  cur_obj.object_name );
+				config.cpp_file( ) << fmt::format(
+				  "\t\tstatic constexpr char const mem_{}[] = \"", child.first );
+				auto child_name =
+				  daw::string_view( child.first.data( ), child.first.size( ) );
+				if( child_name.starts_with( "_json" ) ) {
+					child_name.remove_prefix( 5 );
 				}
-				config.cpp_file( ) << "\t>{};\n}\n\n";
-
-				config.cpp_file( ) << "inline auto to_json_data( "
-				                   << cur_obj.object_name << " const & value ) {\n";
-				config.cpp_file( ) << "\treturn std::forward_as_tuple( ";
-				is_first = true;
-				for( auto const &child : *cur_obj.children ) {
-					if( config.hide_null_only and is_null( child.second ) ) {
-						continue;
-					}
-					if( !is_first ) {
-						config.cpp_file( ) << ", ";
-					} else {
-						is_first = !is_first;
-					}
-					config.cpp_file( ) << "value." << child.first;
-				}
-				config.cpp_file( ) << " );\n}\n\n";
+				config.cpp_file( ) << child_name << "\";\n";
 			}
+			config.cpp_file( ) << "\t\t using type = json_member_list<\n";
+
+			bool is_first = true;
+
+			for( auto const &child : *cur_obj.children ) {
+				if( config.hide_null_only and is_null( child.second ) ) {
+					continue;
+				}
+				config.cpp_file( ) << "\t\t\t\t";
+				if( not is_first ) {
+					config.cpp_file( ) << ",";
+				} else {
+					is_first = false;
+				}
+				if( is_optional( child.second ) ) {
+					config.cpp_file( ) << "json_nullable<";
+				}
+				config.cpp_file( ) << types::ti_value( child.second )
+				                        .json_name( child.first, config.has_cpp20,
+				                                    cur_obj.object_name );
+				if( is_optional( child.second ) ) {
+					config.cpp_file( ) << ">\n";
+				} else {
+					config.cpp_file( ) << '\n';
+				}
+			}
+			config.cpp_file( ) << "\t>;\n\n";
+
+			config.cpp_file( ) << "\t\tstatic inline auto to_json_data( " << cur_obj.object_name
+			                   << " const & value ) {\n";
+			config.cpp_file( ) << "\t\t\treturn std::forward_as_tuple( ";
+			is_first = true;
+			for( auto const &child : *cur_obj.children ) {
+				if( config.hide_null_only and is_null( child.second ) ) {
+					continue;
+				}
+				if( not is_first ) {
+					config.cpp_file( ) << ", ";
+				} else {
+					is_first = not is_first;
+				}
+				config.cpp_file( ) << "value." << child.first;
+			}
+			config.cpp_file( ) << " );\n}\n\t};\n}\n";
 		}
 
-		void generate_json_link_maps( bool definition, config_t &config,
+		void generate_json_link_maps( config_t &config,
 		                              types::ti_object const &cur_obj ) {
 
-			return generate_json_link_maps( std::integral_constant<int, 3>( ),
-			                                definition, config, cur_obj );
+			generate_json_link_maps( std::integral_constant<int, 3>( ), config,
+			                         cur_obj );
 		}
 
 		void generate_includes( bool definition, config_t &config,
@@ -425,11 +420,11 @@ namespace daw::json_to_cpp {
 				std::string const header_message =
 				  "// Code auto generated from json file '" +
 				  config.json_path.string( ) + "'\n\n";
-				if( !definition ) {
+				if( not definition ) {
 					config.header_file( ) << header_message;
 				}
 			}
-			if( !definition ) {
+			if( not definition ) {
 				config.header_file( ) << "#pragma once\n\n";
 				if( config.enable_jsonlink ) {
 					config.header_file( ) << "#include <tuple>\n";
@@ -481,19 +476,16 @@ namespace daw::json_to_cpp {
 				}
 				config.header_file( ) << "};"
 				                      << "\t// " << obj_type << "\n\n";
-				if( config.enable_jsonlink ) {
-					generate_json_link_maps( false, config, cur_obj );
-				}
 			}
 		}
 
 		void generate_definitions( std::vector<types::ti_object> const &obj_info,
 		                           config_t &config ) {
-			if( !config.enable_jsonlink ) {
+			if( not config.enable_jsonlink ) {
 				return;
 			}
 			for( auto const &cur_obj : obj_info ) {
-				generate_json_link_maps( true, config, cur_obj );
+				generate_json_link_maps( config, cur_obj );
 			}
 		}
 

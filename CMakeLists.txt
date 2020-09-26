@@ -10,7 +10,7 @@
 cmake_minimum_required(VERSION 3.13)
 
 project("json_to_cpp"
-        VERSION "1.0.1"
+        VERSION "2.0.0"
 				DESCRIPTION "Try to use the JSON structures to make C++ structures and bindings"
         HOMEPAGE_URL "https://github.com/beached/json_to_cpp"
         LANGUAGES C CXX)
@@ -64,6 +64,7 @@ target_link_libraries( ${PROJECT_NAME} PRIVATE
 	OpenSSL::SSL
 	OpenSSL::Crypto
 	CURL::libcurl
+	fmt::fmt
 )
 target_include_directories( ${PROJECT_NAME} PRIVATE ${HEADER_FOLDER} )
 
