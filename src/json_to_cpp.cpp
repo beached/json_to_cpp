@@ -345,13 +345,13 @@ namespace daw::json_to_cpp {
 			using daw::json::json_value_t;
 			config.cpp_file( ) << fmt::format( "namespace daw::json {{\n",
 			                                   cur_obj.object_name );
+			config.cpp_file( ) << fmt::format(
+			  "\ttemplate<>\n\tstruct json_data_contract<{}> {{\n",
+			  cur_obj.object_name );
 			for( auto const &child : *cur_obj.children ) {
 				if( config.hide_null_only and is_null( child.second ) ) {
 					continue;
 				}
-				config.cpp_file( ) << fmt::format(
-				  "\ttemplate<>\n\tstruct json_data_contract<{}> {{\n",
-				  cur_obj.object_name );
 				config.cpp_file( ) << fmt::format(
 				  "\t\tstatic constexpr char const mem_{}[] = \"", child.first );
 				auto child_name =
@@ -389,8 +389,8 @@ namespace daw::json_to_cpp {
 			}
 			config.cpp_file( ) << "\t>;\n\n";
 
-			config.cpp_file( ) << "\t\tstatic inline auto to_json_data( " << cur_obj.object_name
-			                   << " const & value ) {\n";
+			config.cpp_file( ) << "\t\tstatic inline auto to_json_data( "
+			                   << cur_obj.object_name << " const & value ) {\n";
 			config.cpp_file( ) << "\t\t\treturn std::forward_as_tuple( ";
 			is_first = true;
 			for( auto const &child : *cur_obj.children ) {
