@@ -11,6 +11,8 @@
 #include "types/ti_base.h"
 #include "types/ti_object.h"
 
+#include <daw/daw_visit.h>
+
 namespace daw::json_to_cpp::types {
 	ti_kv::ti_kv( std::string obj_name )
 	  : value( std::make_unique<child_t>( ) )

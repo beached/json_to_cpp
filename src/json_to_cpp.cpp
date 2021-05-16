@@ -12,6 +12,7 @@
 
 #include <daw/daw_bounded_hash_set.h>
 #include <daw/daw_string_view.h>
+#include <daw/daw_visit.h>
 #include <daw/json/daw_json_parser.h>
 
 #include <algorithm>
