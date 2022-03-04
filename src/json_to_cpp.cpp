@@ -75,6 +75,9 @@ namespace daw::json_to_cpp {
 			name = find_replace( name, "\\u", "0x" );
 			// JSON member names are strings.  That is it, so empty looks
 			// like it is valid, as is all digits, or C++ keywords.
+			if( auto pos = name.find( '@' ); pos != std::string::npos ) {
+				name[pos] = '_';
+			}
 			if( name.empty( ) or
 			    not( std::isalpha( name.front( ) ) or name.front( ) == '_' ) or
 			    keywords.count( { name.data( ), name.size( ) } ) > 0 ) {
