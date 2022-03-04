@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+  "name": "json-to-cpp",
+  "version": "0.1.0",
+  "dependencies": [
+    "boost",
+    "fmt",
+    "openssl",
+    "daw-header-libraries",
+    "daw-utf-range",
+    "date"
+  ]
+}
+
