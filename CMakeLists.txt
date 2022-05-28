@@ -8,7 +8,7 @@
 cmake_minimum_required(VERSION 3.13)
 
 project("json_to_cpp"
-        VERSION "2.1.0"
+        VERSION "2.1.1"
         DESCRIPTION "Try to use the JSON structures to make C++ structures and bindings"
         HOMEPAGE_URL "https://github.com/beached/json_to_cpp"
         LANGUAGES C CXX)

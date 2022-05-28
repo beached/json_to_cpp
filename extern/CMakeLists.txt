@@ -17,7 +17,7 @@ include(FetchContent)
 FetchContent_Declare(
         daw_parse_json
         GIT_REPOSITORY https://github.com/beached/parse_json.git
-        GIT_TAG v1.1.0
+        GIT_TAG v1.1.1
 )
 
 FetchContent_Declare(
