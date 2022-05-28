@@ -26,8 +26,9 @@ namespace daw::json_to_cpp::types::impl {
 	inline constexpr size_t ti_kv_pos = 7;
 
 	template<typename Variant, typename T, size_t Pos>
-	inline constexpr bool validate_pos_value_v =
-	  std::is_same_v<daw::remove_cvref_t<decltype( std::get<Pos>( std::declval<Variant>( ) ) )>, T>;
+	inline constexpr bool validate_pos_value_v = std::is_same_v<
+	  daw::remove_cvref_t<decltype( std::get<Pos>( std::declval<Variant>( ) ) )>,
+	  T>;
 
 	template<typename... Ts>
 	struct pack_list {};
@@ -36,7 +37,8 @@ namespace daw::json_to_cpp::types::impl {
 	auto var_to_pack_impl( Variant<Args...> ) -> pack_list<Args...>;
 
 	template<typename Variant>
-	using var_to_pack_t = decltype( var_to_pack_impl( std::declval<Variant>( ) ) );
+	using var_to_pack_t =
+	  decltype( var_to_pack_impl( std::declval<Variant>( ) ) );
 
 	template<typename... Args0, typename... Args1>
 	constexpr bool are_same( pack_list<Args0...>, pack_list<Args1...> ) noexcept {
@@ -47,8 +49,8 @@ namespace daw::json_to_cpp::types::impl {
 		return ( std::is_same_v<Args0, Args1> and ... );
 	}
 
-	inline std::string
-	format_member_name( daw::string_view name, bool use_cpp20, daw::string_view parent_name ) {
+	inline std::string format_member_name( daw::string_view name, bool use_cpp20,
+	                                       daw::string_view parent_name ) {
 		if( use_cpp20 ) {
 			std::string result = "\"";
 			result.reserve( name.size( ) + 2 );

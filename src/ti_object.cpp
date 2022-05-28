@@ -9,7 +9,7 @@
 #include <cstddef>
 #include <string>
 
-#include <daw/json/daw_json_value_t.h>
+#include <daw/json/daw_json_link.h>
 
 #include "types/ti_base.h"
 #include "types/ti_object.h"

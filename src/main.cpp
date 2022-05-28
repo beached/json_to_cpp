@@ -39,7 +39,8 @@ namespace {
 		} );
 	}
 
-	std::vector<std::vector<std::string>> process_paths( std::vector<std::string> const &paths ) {
+	std::vector<std::vector<std::string>>
+	process_paths( std::vector<std::string> const &paths ) {
 		auto result = std::vector<std::vector<std::string>>( );
 		for( std::string const &p : paths ) {
 			if( p.empty( ) ) {
@@ -69,19 +70,16 @@ int main( int argc, char **argv ) {
 
 	boost::program_options::options_description desc{ "Options" };
 	desc.add_options( )( "help", "print option descriptions" )(
-	  "in_file",
-	  boost::program_options::value<std::filesystem::path>( ),
-	  "json source file path or url" )( "kv_paths",
-	                                    boost::program_options::value<std::vector<std::string>>( ),
-	                                    "Specify class members that are key value pairs" )(
+	  "in_file", boost::program_options::value<std::filesystem::path>( ),
+	  "json source file path or url" )(
+	  "kv_paths", boost::program_options::value<std::vector<std::string>>( ),
+	  "Specify class members that are key value pairs" )(
 	  "use_jsonlink",
 	  boost::program_options::value<bool>( )->default_value( true ),
 	  "Use JsonLink serializaion/deserialization" )(
-	  "has_cpp20",
-	  boost::program_options::value<bool>( )->default_value( false ),
+	  "has_cpp20", boost::program_options::value<bool>( )->default_value( false ),
 	  "Enables use of non-type class template arguments" )(
-	  "output_file",
-	  boost::program_options::value<std::filesystem::path>( ),
+	  "output_file", boost::program_options::value<std::filesystem::path>( ),
 	  "output goes to c++ header file." )(
 	  "allow_overwrite",
 	  boost::program_options::value<bool>( )->default_value( false ),
@@ -94,7 +92,8 @@ int main( int argc, char **argv ) {
 	  "Use std::string_view instead of std::string.  Must ensure buffer is "
 	  "available after parsing when this is used" )(
 	  "root_object",
-	  boost::program_options::value<std::string>( )->default_value( "root_object" ),
+	  boost::program_options::value<std::string>( )->default_value(
+	    "root_object" ),
 	  "Name of the nameless root object" )(
 	  "user_agent",
 	  boost::program_options::value<std::string>( )->default_value(
@@ -103,8 +102,8 @@ int main( int argc, char **argv ) {
 
 	auto vm = boost::program_options::variables_map( );
 	try {
-		boost::program_options::store( boost::program_options::parse_command_line( argc, argv, desc ),
-		                               vm );
+		boost::program_options::store(
+		  boost::program_options::parse_command_line( argc, argv, desc ), vm );
 		if( vm.count( "help" ) ) {
 			std::cout << "Command line options\n" << desc << std::endl;
 			return EXIT_SUCCESS;
@@ -125,15 +124,16 @@ int main( int argc, char **argv ) {
 	config.root_object_name = vm["root_object"].as<std::string>( );
 
 	if( vm.count( "kv_paths" ) > 0 ) {
-		config.kv_paths = process_paths( vm["kv_paths"].as<std::vector<std::string>>( ) );
+		config.kv_paths =
+		  process_paths( vm["kv_paths"].as<std::vector<std::string>>( ) );
 	}
 
 	auto const json_str = [&]( ) {
 		if( auto const p = config.json_path.string( ); daw::curl::is_url( p ) ) {
 			auto tmp = daw::curl::download( p, vm["user_agent"].as<std::string>( ) );
 			if( not tmp ) {
-				std::cerr << "Could not download json data from '" << canonical( config.json_path )
-				          << "'\n";
+				std::cerr << "Could not download json data from '"
+				          << canonical( config.json_path ) << "'\n";
 				exit( EXIT_FAILURE );
 			}
 			return *tmp;
@@ -146,13 +146,13 @@ int main( int argc, char **argv ) {
 
 			auto in_file = std::ifstream( config.json_path.string( ) );
 			if( not in_file ) {
-				std::cerr << "Could not open json in_file '" << canonical( config.json_path ) << "'\n";
+				std::cerr << "Could not open json in_file '"
+				          << canonical( config.json_path ) << "'\n";
 				exit( EXIT_FAILURE );
 			}
 			auto tmp = std::string( );
 			std::copy( std::istream_iterator<char>( in_file ),
-			           std::istream_iterator<char>( ),
-			           std::back_inserter( tmp ) );
+			           std::istream_iterator<char>( ), std::back_inserter( tmp ) );
 			return tmp;
 		}
 	}( );
@@ -168,14 +168,16 @@ int main( int argc, char **argv ) {
 
 	if( vm.count( "cpp_file" ) > 0 ) {
 		bool const allow_overwrite = vm["allow_overwrite"].as<bool>( );
-		config.cpp_path = canonical( vm["output_file"].as<std::filesystem::path>( ) );
+		config.cpp_path =
+		  canonical( vm["output_file"].as<std::filesystem::path>( ) );
 		if( exists( config.cpp_path ) and not allow_overwrite ) {
 			std::cerr << "output_file '" << config.cpp_path << "' already exists\n";
 			exit( EXIT_FAILURE );
 		}
 		cpp_file.open( config.cpp_path.string( ), std::ios::out | std::ios::trunc );
 		if( not cpp_file ) {
-			std::cerr << "Could not open cpp_file '" << config.cpp_path << "' for writing\n";
+			std::cerr << "Could not open cpp_file '" << config.cpp_path
+			          << "' for writing\n";
 			exit( EXIT_FAILURE );
 		}
 		config.cpp_stream = &cpp_file;

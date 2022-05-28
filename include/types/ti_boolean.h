@@ -12,7 +12,7 @@
 #include <string>
 
 #include <daw/daw_string_view.h>
-#include <daw/json/daw_json_value_t.h>
+#include <daw/json/daw_json_link.h>
 
 namespace daw::json_to_cpp::types {
 	struct ti_boolean {
