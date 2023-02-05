@@ -3,7 +3,9 @@
   "name": "json-to-cpp",
   "version": "0.1.0",
   "dependencies": [
-    "boost",
+    "boost-filesystem",
+    "boost-iostreams",
+    "boost-program-options",
     "date",
     "fmt",
     "openssl"
