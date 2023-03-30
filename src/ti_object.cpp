@@ -28,8 +28,15 @@ namespace daw::json_to_cpp::types {
 	std::string ti_object::json_name( daw::string_view member_name,
 	                                  bool use_cpp20,
 	                                  daw::string_view parent_name ) const {
+		auto const gen_member_name = impl::format_member_name( member_name, use_cpp20, parent_name );
+		if (gen_member_name == "no_name") {
+			// array member should not have name
+			// json_class_no_name<data_element_t>
+			return "json_class_no_name<" + name( ) + ">";
+		}
+		// json_class<"name", data_element_t>
 		return "json_class<" +
-		       impl::format_member_name( member_name, use_cpp20, parent_name ) +
+		       gen_member_name +
 		       ", " + name( ) + ">";
 	}
 
